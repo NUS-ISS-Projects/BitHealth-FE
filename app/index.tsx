@@ -6,13 +6,15 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text>Welcome to the Doctor Appointment App</Text>
+      <Text>Welcome</Text>
+      <View style={{ padding: 20 }}>
+        <Button
+          title='I am a Patient'
+          onPress={() => router.push("/patient")}
+        />
+      </View>
       <Button
-        title='Book Appointment'
-        onPress={() => router.push("/patient/book")}
-      />
-      <Button
-        title='Doctor Dashboard'
+        title='I am a Doctor'
         onPress={() => router.push("/doctor/dashboard")}
       />
     </View>
