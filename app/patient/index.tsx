@@ -59,6 +59,7 @@ export default function PatientHome() {
             <Button
               mode='contained'
               style={styles.bookButton}
+              labelStyle={{ color: "white" }}
               onPress={() => router.push("/patient/book")}
             >
               Make appointment

@@ -1,26 +1,29 @@
-import React from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
-import {
-  Text,
-  Button,
-  Avatar,
-  Card,
-  Badge,
-  IconButton,
-} from "react-native-paper";
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView } from "react-native";
+import { Text, Button, Avatar, Card, IconButton } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
 import colors from "../theme/colors";
 
-export default function ConfirmAppointment() {
-  const {
-    doctor,
-    date = "July 4, 2024",
-    location = "Komuk Express Semarang",
-  } = useLocalSearchParams();
+export default function AppointmentDate() {
+  const { doctor = "Dr. Budi Sound", location = "Komuk Express Semarang" } =
+    useLocalSearchParams();
   const router = useRouter();
+  const [date, setDate] = useState<Date | null>(null);
+  const [time, setTime] = useState<string | null>(null);
+  const [openDatePicker, setOpenDatePicker] = useState(false);
+  const [openTimePicker, setOpenTimePicker] = useState(false);
 
-  const handleBooking = () => {
-    router.push("/patient");
+  const handleDateConfirm = (params: any) => {
+    setOpenDatePicker(false);
+    setDate(params.date);
+  };
+
+  const handleTimeConfirm = (params: any) => {
+    setOpenTimePicker(false);
+    setTime(
+      `${params.hours}:${params.minutes < 10 ? "0" : ""}${params.minutes}`
+    );
   };
 
   return (
@@ -34,28 +37,22 @@ export default function ConfirmAppointment() {
           size={18}
           onPress={() => router.back()}
         />
-        <Text style={styles.headerBar}>Confirm Date</Text>
+        <Text style={styles.headerBar}>Select date and time</Text>
       </View>
       {/* Header */}
       <View style={styles.headerContainer}>
         <View>
-          <Text style={styles.header}>Is everything</Text>
-          <Text style={styles.header}>correct?</Text>
+          <Text style={styles.header}>When</Text>
+          <Text style={styles.header}>are you free?</Text>
         </View>
         <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>4/4</Text>
+          <Text style={styles.progressText}>3/4</Text>
         </View>
       </View>
 
-      {/* Confirmation Card */}
+      {/* Doctor Card */}
       <Card style={styles.card}>
         <Card.Content>
-          <View style={styles.confirmRow}>
-            <Text style={styles.confirmTitle}>Confirm appointment</Text>
-            <Badge style={styles.pendingBadge}>Pending</Badge>
-          </View>
-
-          {/* Doctor Info */}
           <View style={styles.doctorContainer}>
             <Avatar.Image
               size={50}
@@ -73,13 +70,6 @@ export default function ConfirmAppointment() {
             </View>
           </View>
           <View style={styles.divider} />
-
-          {/* Date and Location */}
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>📅 Date</Text>
-            <Text style={styles.value}>{date}</Text>
-          </View>
-          <View style={styles.divider} />
           <View>
             <View style={styles.locationRow}>
               <Text style={styles.label}>📍 Location</Text>
@@ -92,14 +82,62 @@ export default function ConfirmAppointment() {
         </Card.Content>
       </Card>
 
-      {/* Book Now Button */}
+      {/* Date Selection */}
+      <View style={styles.dateContainer}>
+        <Text style={styles.label}>📅 Select your date here</Text>
+        <Button
+          mode='outlined'
+          onPress={() => setOpenDatePicker(true)}
+          style={styles.dateButton}
+          labelStyle={styles.dateButtonText}
+        >
+          {date ? date.toDateString() : "Pick a Date"}
+        </Button>
+      </View>
+
+      {/* Time Selection */}
+      <View style={styles.dateContainer}>
+        <Text style={styles.label}>⏰ Select Time</Text>
+        <Button
+          mode='outlined'
+          onPress={() => setOpenTimePicker(true)}
+          style={styles.dateButton}
+          labelStyle={styles.dateButtonText}
+        >
+          {time ? time : "Pick a Time"}
+        </Button>
+      </View>
+
+      {/* Date Picker Modal */}
+      <DatePickerModal
+        locale='en'
+        mode='single'
+        visible={openDatePicker}
+        onDismiss={() => setOpenDatePicker(false)}
+        date={date || new Date()}
+        onConfirm={handleDateConfirm}
+      />
+
+      {/* Time Picker Modal */}
+      <TimePickerModal
+        visible={openTimePicker}
+        onDismiss={() => setOpenTimePicker(false)}
+        onConfirm={handleTimeConfirm}
+      />
+      {/* Next Button */}
+      <View style={{ paddingVertical: 5 }}></View>
       <Button
         mode='contained'
-        style={styles.bookButton}
-        labelStyle={styles.bookButtonText}
-        onPress={handleBooking}
+        style={styles.nextButton}
+        labelStyle={styles.nextButtonText}
+        onPress={() =>
+          router.push(
+            `/patient/confirm?doctor=${doctor}&date=${date?.toISOString()}`
+          )
+        }
+        disabled={!date}
       >
-        Book now
+        Next
       </Button>
     </ScrollView>
   );
@@ -108,7 +146,7 @@ export default function ConfirmAppointment() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F2EC",
+    backgroundColor: colors.background,
     padding: 20,
   },
   headerBarContainer: {
@@ -128,7 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   header: {
-    fontSize: 25,
+    fontSize: 24,
     fontWeight: "bold",
     color: colors.primary,
   },
@@ -151,35 +189,18 @@ const styles = StyleSheet.create({
     padding: 15,
     marginBottom: 20,
   },
-  confirmRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  confirmTitle: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: colors.primary,
-  },
-  pendingBadge: {
-    backgroundColor: "#FBE8E7",
-    color: "#D9534F",
-    fontSize: 14,
-    fontWeight: "bold",
-  },
   doctorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    paddingBottom: 10,
   },
   doctorInfo: {
-    paddingLeft: 15,
+    marginLeft: 15,
   },
   doctorName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
-    color: colors.primary,
+    color: colors.textPrimary,
   },
   specialty: {
     fontSize: 14,
@@ -199,38 +220,48 @@ const styles = StyleSheet.create({
     backgroundColor: "#E5E5E5",
     marginVertical: 5,
   },
-  infoRow: {
-    flexDirection: "row",
-    paddingVertical: 10,
-    justifyContent: "space-between",
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: colors.textSecondary,
-  },
-  value: {
-    fontSize: 12,
-    color: colors.textPrimary,
-    fontWeight: "bold",
-  },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 10,
   },
+  value: {
+    fontSize: 12,
+    color: colors.textPrimary,
+    fontWeight: "bold",
+  },
   directions: {
     fontSize: 12,
     color: "#007AFF",
     textDecorationLine: "underline",
   },
-  bookButton: {
+  dateContainer: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: colors.textSecondary,
+    paddingBottom: 10,
+  },
+  dateButton: {
+    borderColor: colors.primary,
+    borderWidth: 1,
+    paddingVertical: 10,
+    borderRadius: 50,
+  },
+  dateButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.primary,
+  },
+  nextButton: {
     backgroundColor: colors.primary,
     borderRadius: 50,
     paddingVertical: 10,
   },
-  bookButtonText: {
+  nextButtonText: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",

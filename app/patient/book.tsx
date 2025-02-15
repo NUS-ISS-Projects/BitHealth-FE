@@ -75,7 +75,7 @@ export default function SelectDoctor() {
       colors={["#00451a", "#015e25", "#055127"]}
       style={styles.gradientContainer}
     >
-      <View style={styles.headerContainer}>
+      <View style={styles.headerBarContainer}>
         <IconButton
           mode='contained'
           icon='arrow-left'
@@ -87,20 +87,14 @@ export default function SelectDoctor() {
         <Text style={styles.headerBar}>Make appointment</Text>
       </View>
       <View style={styles.divider} />
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          paddingVertical: 10,
-        }}
-      >
+      <View style={styles.headerContainer}>
         <View>
           <Text style={styles.header}>Choose</Text>
           <Text style={styles.header}>the doctor</Text>
         </View>
         {/* Progress Indicator */}
         <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>2/3</Text>
+          <Text style={styles.progressText}>2/4</Text>
         </View>
       </View>
 
@@ -163,7 +157,9 @@ export default function SelectDoctor() {
           style={styles.nextButton}
           labelStyle={styles.nextButtonText}
           onPress={() =>
-            router.push(`/patient/confirm?doctor=${selectedDoctor?.name}`)
+            router.push(
+              `/patient/appointmentDate?doctor=${selectedDoctor?.name}`
+            )
           }
           disabled={!selectedDoctor}
         >
@@ -184,7 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     padding: 20,
   },
-  headerContainer: {
+  headerBarContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingBottom: 10,
@@ -199,6 +195,11 @@ const styles = StyleSheet.create({
     fontWeight: "regular",
     color: "#FFFFFF",
     paddingLeft: 70,
+  },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
   },
   header: {
     fontSize: 35,
