@@ -2,10 +2,16 @@ import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button, Avatar, Card, IconButton } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { DatePickerModal, TimePickerModal } from "react-native-paper-dates";
+import {
+  enGB,
+  registerTranslation,
+  DatePickerModal,
+  TimePickerModal,
+} from "react-native-paper-dates";
 import colors from "../theme/colors";
 
 export default function AppointmentDate() {
+  registerTranslation("en", enGB);
   const { doctor = "Dr. Budi Sound", location = "Komuk Express Semarang" } =
     useLocalSearchParams();
   const router = useRouter();
@@ -84,7 +90,9 @@ export default function AppointmentDate() {
 
       {/* Date Selection */}
       <View style={styles.dateContainer}>
-        <Text style={styles.label}>📅 Select your date here</Text>
+        <View style={{ marginBottom: 10 }}>
+          <Text style={styles.label}>📅 Select a date here</Text>
+        </View>
         <Button
           mode='outlined'
           onPress={() => setOpenDatePicker(true)}
@@ -97,7 +105,9 @@ export default function AppointmentDate() {
 
       {/* Time Selection */}
       <View style={styles.dateContainer}>
-        <Text style={styles.label}>⏰ Select Time</Text>
+        <View style={{ marginBottom: 10 }}>
+          <Text style={styles.label}>⏰ Select a time here</Text>
+        </View>
         <Button
           mode='outlined'
           onPress={() => setOpenTimePicker(true)}
@@ -132,7 +142,7 @@ export default function AppointmentDate() {
         labelStyle={styles.nextButtonText}
         onPress={() =>
           router.push(
-            `/patient/confirm?doctor=${doctor}&date=${date?.toISOString()}`
+            `/patient/confirmAppointment?doctor=${doctor}&date=${date?.toISOString()}`
           )
         }
         disabled={!date}
@@ -243,7 +253,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     color: colors.textSecondary,
-    paddingBottom: 10,
   },
   dateButton: {
     borderColor: colors.primary,

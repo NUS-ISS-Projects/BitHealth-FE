@@ -16,11 +16,14 @@ export default function ConfirmAppointment() {
     doctor,
     date = "July 4, 2024",
     location = "Komuk Express Semarang",
+    time = "09:00",
   } = useLocalSearchParams();
   const router = useRouter();
 
   const handleBooking = () => {
-    router.push("/patient");
+    router.push(
+      `/patient/confirmed?doctor=${doctor}&date=${date}&time=${time}&location=${location}`
+    );
   };
 
   return (
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 55,
+    paddingLeft: 85,
   },
   headerContainer: {
     flexDirection: "row",
