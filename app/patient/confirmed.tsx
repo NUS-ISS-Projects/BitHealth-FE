@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   bookButtonText: {
+    color: "white",
     fontSize: 16,
     fontWeight: "bold",
   },
