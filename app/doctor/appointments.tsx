@@ -25,17 +25,16 @@ const appointments = [
     time: "02:00 PM",
     status: "Rejected",
   },
-  // Add more mock data as needed
 ];
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Completed":
-      return "#4CAF50"; // Green
+      return "#4CAF50";
     case "Rejected":
-      return "#D32F2F"; // Red
+      return "#D32F2F";
     case "Expired":
-      return "#757575"; // Grey
+      return "#757575";
     default:
       return colors.primary;
   }
@@ -72,7 +71,7 @@ export default function DoctorAppointmentsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background, // e.g., soft beige or your chosen background color
+    backgroundColor: colors.background,
     padding: 20,
   },
   header: {
@@ -83,7 +82,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 15,
-    backgroundColor: colors.cardBackground, // e.g., white
+    backgroundColor: colors.cardBackground,
   },
   cardContent: {
     flexDirection: "row",
