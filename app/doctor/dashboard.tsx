@@ -74,7 +74,10 @@ export default function DoctorDashboard() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.welcomeTxt}>Welcome Back!</Text>
@@ -184,7 +187,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
     padding: 20,
+    paddingBottom: 40,
   },
   header: {
     justifyContent: "space-between",
@@ -276,12 +282,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   time: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   date: {
     marginRight: 2,
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   buttonRow: {
