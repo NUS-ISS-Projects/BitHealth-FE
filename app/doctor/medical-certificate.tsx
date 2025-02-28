@@ -11,21 +11,32 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import colors from "../theme/colors";
 
+const formFields = [
+  { label: "Date of Visit", field: "dateOfVisit" },
+  { label: "MC No.", field: "mcNo" },
+  { label: "Name", field: "name" },
+  { label: "NRIC", field: "nric" },
+  { label: "Reason", field: "reason", multiline: true },
+  { label: "Remarks", field: "remarks", multiline: true },
+];
+
 export default function MedicalCertificateScreen() {
   const { appointmentId } = useLocalSearchParams();
   const router = useRouter();
 
-  const [date, setDate] = useState("");
-  const [mc, setMC] = useState("");
-  const [name, setName] = useState("");
-  const [id, setID] = useState("");
-  const [reason, setReason] = useState("");
-  const [remarks, setRemarks] = useState("");
+  const [formData, setFormData] = useState({
+    dateOfVisit: "",
+    mcNo: "",
+    name: "",
+    nric: "",
+    reason: "",
+    remarks: "",
+  });
   const [status, setStatus] = useState("Pending");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const handleSave = () => {
-    setLastUpdated(new Date());
+  const handleChange = (field: keyof typeof formData) => (value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleApprove = () => {
@@ -44,51 +55,30 @@ export default function MedicalCertificateScreen() {
           size={18}
           onPress={() => router.back()}
         />
-        <Text style={styles.headerBar}>Upload Medical Certificate</Text>
+        <Text style={styles.headerBar}>Enter Medical Certificate Details</Text>
       </View>
       <View style={styles.contentContainer}>
         <Card style={styles.card}>
           <Card.Content>
-            <TextInput
-              label='Date of Visit'
-              value={date}
-              onChangeText={setDate}
-              style={styles.input}
-            />
-            <TextInput
-              label='MC No.'
-              value={mc}
-              onChangeText={setMC}
-              style={styles.input}
-            />
-            <TextInput
-              label='Name'
-              value={name}
-              onChangeText={setName}
-              style={styles.input}
-            />
-            <TextInput
-              label='NRIC'
-              value={id}
-              onChangeText={setID}
-              style={styles.input}
-            />
-            <TextInput
-              label='Reason'
-              multiline
-              numberOfLines={5}
-              value={reason}
-              onChangeText={setReason}
-              style={[styles.input, styles.multilineInput]}
-            />
-            <TextInput
-              label='Remarks'
-              multiline
-              numberOfLines={5}
-              value={remarks}
-              onChangeText={setRemarks}
-              style={[styles.input, styles.multilineInput]}
-            />
+            {formFields.map((field) => (
+              <TextInput
+                key={field.field}
+                label={field.label}
+                mode='outlined'
+                value={formData[field.field as keyof typeof formData]}
+                onChangeText={handleChange(
+                  field.field as keyof typeof formData
+                )}
+                style={[styles.input, field.multiline && styles.multilineInput]}
+                multiline={field.multiline}
+                numberOfLines={field.multiline ? 5 : 1}
+                theme={{
+                  colors: {
+                    primary: colors.primary,
+                  },
+                }}
+              />
+            ))}
 
             <View style={styles.statusContainer}>
               <Chip
@@ -142,7 +132,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 30,
+    paddingLeft: 10,
   },
   contentContainer: {
     paddingBottom: 40,
