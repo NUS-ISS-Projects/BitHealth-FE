@@ -1,11 +1,12 @@
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Card, Text, Button, IconButton } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
 
-export default function PrescriptionScreen() {
+const PrescriptionScreen: React.FC = () => {
   const {
     appointmentId,
     patientName = "John Doe",
@@ -13,14 +14,18 @@ export default function PrescriptionScreen() {
     date = "12 Jan 2024, 8am-10am",
   } = useLocalSearchParams();
 
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   const handleMedicalCertificate = () => {
-    router.push(`/doctor/medical-certificate?appointmentId=${appointmentId}`);
+    navigation.navigate("MedicalCertificate", { appointmentId });
   };
 
   const handlePrescription = () => {
-    router.push(`/doctor/prescription-details?appointmentId=${appointmentId}`);
+    navigation.navigate("PrescriptionDetails", { appointmentId });
+  };
+
+  const handleComplete = () => {
+    navigation.navigate("DashboardMain");
   };
 
   return (
@@ -32,7 +37,7 @@ export default function PrescriptionScreen() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Appointment Request</Text>
       </View>
@@ -86,7 +91,7 @@ export default function PrescriptionScreen() {
           mode='contained'
           style={styles.button}
           labelStyle={styles.buttonText}
-          onPress={handlePrescription}
+          onPress={handleComplete}
           icon={() => (
             <FontAwesome name='check-circle' size={20} color='#FFFFFF' />
           )}
@@ -96,7 +101,9 @@ export default function PrescriptionScreen() {
       </View>
     </ScrollView>
   );
-}
+};
+
+export default PrescriptionScreen;
 
 const styles = StyleSheet.create({
   container: {

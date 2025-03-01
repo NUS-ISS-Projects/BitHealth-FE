@@ -14,18 +14,13 @@ export default function DoctorSettings() {
   const [specialty, setSpecialty] = useState("Aesthetic Doctor");
 
   const handleSave = () => {
-    // Implement your save logic here (e.g., API call)
     console.log("Profile saved", { fullName, email, phone, specialty });
-    // Optionally navigate back to the dashboard or show a confirmation message
     router.push("/doctor/dashboard");
   };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
       <Text style={styles.header}>Settings</Text>
-
-      {/* Profile Picture */}
       <View style={styles.avatarContainer}>
         <Avatar.Image
           size={100}
@@ -35,14 +30,17 @@ export default function DoctorSettings() {
           <Text style={styles.editAvatarText}>Edit</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Form Fields */}
       <TextInput
         label='Full Name'
         mode='outlined'
         value={fullName}
         onChangeText={setFullName}
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
       />
       <TextInput
         label='Email'
@@ -51,6 +49,11 @@ export default function DoctorSettings() {
         onChangeText={setEmail}
         keyboardType='email-address'
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
       />
       <TextInput
         label='Phone Number'
@@ -59,6 +62,11 @@ export default function DoctorSettings() {
         onChangeText={setPhone}
         keyboardType='phone-pad'
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
       />
       <TextInput
         label='Specialty'
@@ -66,6 +74,11 @@ export default function DoctorSettings() {
         value={specialty}
         onChangeText={setSpecialty}
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
       />
 
       {/* Save Button */}

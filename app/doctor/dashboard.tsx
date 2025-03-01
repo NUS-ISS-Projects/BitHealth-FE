@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Card, Avatar, Button, Divider } from "react-native-paper";
-import { useRouter } from "expo-router";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 const mockConfirmedAppointments = [
   {
@@ -44,12 +44,12 @@ const mockPendingRequests = [
 ];
 
 export default function DoctorDashboard() {
+  const navigation = useNavigation<NavigationProp<any>>();
   const [confirmedAppointments, setConfirmedAppointments] = useState(
     mockConfirmedAppointments
   );
   const [pendingRequests, setPendingRequests] = useState(mockPendingRequests);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const router = useRouter();
 
   const currentRequest = pendingRequests[currentIndex];
 
@@ -168,9 +168,9 @@ export default function DoctorDashboard() {
                 mode='outlined'
                 textColor='#123D1F'
                 onPress={() =>
-                  router.push(
-                    `/doctor/prescription?appointmentId=${appointment.id}`
-                  )
+                  navigation.navigate("Prescription", {
+                    appointmentId: appointment.id,
+                  })
                 }
               >
                 View
