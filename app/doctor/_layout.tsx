@@ -20,6 +20,15 @@ function DashboardStack() {
   );
 }
 
+function AppointmentStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name='Appointments' component={AppointmentsScreen} />
+      <Stack.Screen name='Prescription' component={PrescriptionScreen} />
+    </Stack.Navigator>
+  );
+}
+
 export default function DoctorLayout() {
   return (
     <Tab.Navigator
@@ -36,7 +45,7 @@ export default function DoctorLayout() {
         },
         tabBarIcon: ({ color, size }) => {
           let iconName: "calendar" | "cog" | "home" = "home";
-          if (route.name === "Appointments") {
+          if (route.name === "AppointmentList") {
             iconName = "calendar";
           } else if (route.name === "Settings") {
             iconName = "cog";
@@ -48,7 +57,7 @@ export default function DoctorLayout() {
       })}
     >
       <Tab.Screen name='Home' component={DashboardStack} />
-      <Tab.Screen name='Appointments' component={AppointmentsScreen} />
+      <Tab.Screen name='AppointmentList' component={AppointmentStack} />
       <Tab.Screen name='Settings' component={DoctorSettings} />
     </Tab.Navigator>
   );

@@ -1,16 +1,19 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, View, TouchableOpacity } from "react-native";
 import { Text, TextInput, Button, Avatar } from "react-native-paper";
+import { useRouter } from "expo-router";
 import colors from "../theme/colors";
 
 export default function DoctorSettings() {
-  const [fullName, setFullName] = useState("Dr. Budi Sound");
-  const [email, setEmail] = useState("budi@example.com");
-  const [phone, setPhone] = useState("+62 812 3456 7890");
-  const [specialty, setSpecialty] = useState("Aesthetic Doctor");
+  const router = useRouter();
+
+  // Example state fields for the Patient's profile
+  const [fullName, setFullName] = useState("Jong Yann");
+  const [email, setEmail] = useState("jogoh@example.com");
+  const [phone, setPhone] = useState("+65 9786 8888");
 
   const handleSave = () => {
-    console.log("Profile saved", { fullName, email, phone, specialty });
+    console.log("Profile saved", { fullName, email, phone });
   };
 
   return (
@@ -56,18 +59,6 @@ export default function DoctorSettings() {
         value={phone}
         onChangeText={setPhone}
         keyboardType='phone-pad'
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.primary,
-          },
-        }}
-      />
-      <TextInput
-        label='Specialty'
-        mode='outlined'
-        value={specialty}
-        onChangeText={setSpecialty}
         style={styles.input}
         theme={{
           colors: {
