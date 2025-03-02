@@ -9,12 +9,13 @@ import {
   TimePickerModal,
 } from "react-native-paper-dates";
 import colors from "../theme/colors";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 export default function AppointmentDate() {
   registerTranslation("en", enGB);
   const { doctor = "Dr. Budi Sound", location = "Komuk Express Semarang" } =
     useLocalSearchParams();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<string | null>(null);
   const [openDatePicker, setOpenDatePicker] = useState(false);
@@ -41,7 +42,7 @@ export default function AppointmentDate() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Select date and time</Text>
       </View>
@@ -140,11 +141,7 @@ export default function AppointmentDate() {
         mode='contained'
         style={styles.nextButton}
         labelStyle={styles.nextButtonText}
-        onPress={() =>
-          router.push(
-            `/patient/confirmAppointment?doctor=${doctor}&date=${date?.toISOString()}`
-          )
-        }
+        onPress={() => navigation.navigate("ConfirmAppointment")}
         disabled={!date}
       >
         Next

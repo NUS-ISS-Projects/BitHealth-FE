@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { IconButton, Text, Button, Avatar, Card } from "react-native-paper";
-import { useRouter } from "expo-router";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import colors from "../theme/colors";
 
@@ -68,7 +68,7 @@ export default function SelectDoctor() {
   const [selectedDoctor, setSelectedDoctor] = useState<
     (typeof doctors)[0] | null
   >(null);
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   return (
     <LinearGradient
@@ -82,7 +82,7 @@ export default function SelectDoctor() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Make appointment</Text>
       </View>
@@ -156,11 +156,7 @@ export default function SelectDoctor() {
           mode='contained'
           style={styles.nextButton}
           labelStyle={styles.nextButtonText}
-          onPress={() =>
-            router.push(
-              `/patient/appointmentDate?doctor=${selectedDoctor?.name}`
-            )
-          }
+          onPress={() => navigation.navigate("AppointmentDate")}
           disabled={!selectedDoctor}
         >
           Next

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Image, ScrollView, StyleSheet } from "react-native";
 import { Text, Button, Card, Avatar } from "react-native-paper";
-import { useRouter } from "expo-router";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 
 const appointments = [
@@ -20,8 +20,7 @@ const appointments = [
 ];
 
 export default function PatientHome() {
-  const router = useRouter();
-
+  const navigation = useNavigation<NavigationProp<any>>();
   return (
     <ScrollView style={styles.container}>
       <View style={styles.contentWrapper}>
@@ -60,7 +59,7 @@ export default function PatientHome() {
               mode='contained'
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
-              onPress={() => router.push("/patient/book")}
+              onPress={() => navigation.navigate("Book")}
             >
               Make appointment
             </Button>

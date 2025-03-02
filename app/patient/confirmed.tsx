@@ -4,6 +4,7 @@ import { Text, Button } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { Image } from "expo-image";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 export default function AppointmentConfirmed() {
   const {
@@ -12,7 +13,7 @@ export default function AppointmentConfirmed() {
     location = "Komuk Express Semarang",
     time = "09:00",
   } = useLocalSearchParams();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   return (
     <View style={styles.container}>
@@ -39,7 +40,7 @@ export default function AppointmentConfirmed() {
         mode='contained'
         style={styles.bookButton}
         labelStyle={styles.bookButtonText}
-        onPress={() => router.push("/patient")}
+        onPress={() => navigation.navigate("Home")}
       >
         Return to home page
       </Button>

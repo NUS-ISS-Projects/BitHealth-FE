@@ -10,6 +10,7 @@ import {
 } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 export default function ConfirmAppointment() {
   const {
@@ -18,12 +19,10 @@ export default function ConfirmAppointment() {
     location = "Komuk Express Semarang",
     time = "09:00",
   } = useLocalSearchParams();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   const handleBooking = () => {
-    router.push(
-      `/patient/confirmed?doctor=${doctor}&date=${date}&time=${time}&location=${location}`
-    );
+    navigation.navigate("Confirmed");
   };
 
   return (
@@ -35,7 +34,7 @@ export default function ConfirmAppointment() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Confirm Date</Text>
       </View>
