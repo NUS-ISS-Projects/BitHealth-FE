@@ -3,6 +3,7 @@ import { View, ScrollView, StyleSheet } from "react-native";
 import { Text, Card, Badge } from "react-native-paper";
 import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 const consultationHistory = [
   {
@@ -29,18 +30,8 @@ const consultationHistory = [
   },
 ];
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "Completed":
-      return colors.primary;
-    case "Cancelled":
-      return "#D32F2F";
-    default:
-      return "#757575";
-  }
-};
-
 export default function History() {
+  const navigation = useNavigation<NavigationProp<any>>();
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -51,7 +42,11 @@ export default function History() {
 
       <ScrollView style={styles.scrollView}>
         {consultationHistory.map((consultation) => (
-          <Card key={consultation.id} style={styles.card}>
+          <Card
+            key={consultation.id}
+            style={styles.card}
+            onPress={() => navigation.navigate("ConsultationDetails")}
+          >
             <Card.Content>
               <View style={styles.cardHeader}>
                 <View>

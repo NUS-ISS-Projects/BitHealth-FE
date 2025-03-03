@@ -10,6 +10,7 @@ import ConfirmAppointment from "./confirmAppointment";
 import Confirmed from "./confirmed";
 import PatientSettings from "./settings";
 import PatientHistory from "./history";
+import ConsultationDetails from "./consultationDetails";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -22,6 +23,18 @@ function AppointmentStack() {
       <Stack.Screen name='AppointmentDate' component={AppointmentDate} />
       <Stack.Screen name='ConfirmAppointment' component={ConfirmAppointment} />
       <Stack.Screen name='Confirmed' component={Confirmed} />
+    </Stack.Navigator>
+  );
+}
+
+function HistoryStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name='HistoryList' component={PatientHistory} />
+      <Stack.Screen
+        name='ConsultationDetails'
+        component={ConsultationDetails}
+      />
     </Stack.Navigator>
   );
 }
@@ -53,7 +66,7 @@ export default function PatientLayout() {
       })}
     >
       <Tab.Screen name='Default' component={AppointmentStack} />
-      <Tab.Screen name='History' component={PatientHistory} />
+      <Tab.Screen name='History' component={HistoryStack} />
       <Tab.Screen name='Settings' component={PatientSettings} />
     </Tab.Navigator>
   );
