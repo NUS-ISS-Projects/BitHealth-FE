@@ -8,29 +8,26 @@ import {
   IconButton,
   Chip,
 } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 
 const formFields = [
   { label: "Date of Visit", field: "dateOfVisit" },
   { label: "MC No.", field: "mcNo" },
   { label: "Name", field: "name" },
-  { label: "NRIC", field: "nric" },
-  { label: "Reason", field: "reason", multiline: true },
-  { label: "Remarks", field: "remarks", multiline: true },
+  { label: "No. of Days", field: "noOfDays" },
+  { label: "With Effect From", field: "effectiveFrom" },
 ];
 
 export default function MedicalCertificateScreen() {
-  const { appointmentId } = useLocalSearchParams();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   const [formData, setFormData] = useState({
     dateOfVisit: "",
     mcNo: "",
     name: "",
-    nric: "",
-    reason: "",
-    remarks: "",
+    noOfDays: "",
+    effectiveFrom: "",
   });
   const [status, setStatus] = useState("Pending");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -53,7 +50,7 @@ export default function MedicalCertificateScreen() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Enter Medical Certificate Details</Text>
       </View>
@@ -69,9 +66,7 @@ export default function MedicalCertificateScreen() {
                 onChangeText={handleChange(
                   field.field as keyof typeof formData
                 )}
-                style={[styles.input, field.multiline && styles.multilineInput]}
-                multiline={field.multiline}
-                numberOfLines={field.multiline ? 5 : 1}
+                style={[styles.input]}
                 theme={{
                   colors: {
                     primary: colors.primary,

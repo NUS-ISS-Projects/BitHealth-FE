@@ -8,7 +8,7 @@ import {
   IconButton,
   Chip,
 } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 
 const formFields = [
@@ -21,8 +21,7 @@ const formFields = [
 ];
 
 export default function PrescriptionDetailsScreen() {
-  const { appointmentId } = useLocalSearchParams();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   const [formData, setFormData] = useState({
     invoiceNo: "",
@@ -53,7 +52,7 @@ export default function PrescriptionDetailsScreen() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Enter Presciption Details</Text>
       </View>

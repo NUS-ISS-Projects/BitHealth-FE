@@ -9,18 +9,32 @@ const appointments = [
     name: "Dr. Budi Sound",
     location: "Komuk Express Semarang",
     date: "21 May",
+    time: "10:00 AM",
     image: require("../../assets/images/favicon.png"),
   },
   {
     name: "Dr. Anastasia",
     location: "Komuk Express Bali",
     date: "17 May",
+    time: "10:00 AM",
     image: require("../../assets/images/favicon.png"),
+  },
+];
+
+const upcomingAppointments = [
+  {
+    name: "Dr. Eugene Huang",
+    location: "Komuk Express Jakarta",
+    date: "24 May",
+    time: "10:00 AM",
+    image: require("../../assets/images/favicon.png"),
+    status: "Upcoming",
   },
 ];
 
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const hasUpcoming = upcomingAppointments.length > 0;
   return (
     <ScrollView style={styles.container}>
       <View style={styles.contentWrapper}>
@@ -42,29 +56,80 @@ export default function PatientHome() {
             Jong Yann! 👋
           </Text>
         </View>
-
-        <Card style={styles.bookingCard}>
-          <Card.Content style={styles.bookingCardContent}>
-            <Image
-              source={require("../../assets/images/patient-home.png")}
-              style={styles.bookingImage}
-            />
-            <Text variant='titleMedium' style={styles.bookingTitle}>
-              No booking schedule
-            </Text>
-            <Text variant='bodyMedium' style={styles.bookingDescription}>
-              Seems like you do not have any appointment scheduled today.
-            </Text>
+        {hasUpcoming ? (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text variant='titleMedium' style={styles.sectionTitle}>
+                Upcoming Appointments
+              </Text>
+            </View>
+            {upcomingAppointments.map((appointment, index) => (
+              <Card
+                key={index}
+                style={styles.appointmentCard}
+                onPress={() => navigation.navigate("AppointmentDetails")}
+              >
+                <Card.Content style={styles.appointmentCardContent}>
+                  <Avatar.Image size={50} source={appointment.image} />
+                  <View style={styles.appointmentDetails}>
+                    <View style={styles.appointmentHeader}>
+                      <Text variant='titleSmall' style={styles.doctorName}>
+                        {appointment.name}
+                      </Text>
+                    </View>
+                    <Text
+                      variant='bodySmall'
+                      style={styles.appointmentLocation}
+                    >
+                      {appointment.location}
+                    </Text>
+                    <View style={styles.timeContainer}>
+                      <Text
+                        variant='labelMedium'
+                        style={styles.appointmentDate}
+                      >
+                        {appointment.date}, {appointment.time}
+                      </Text>
+                    </View>
+                  </View>
+                </Card.Content>
+              </Card>
+            ))}
             <Button
               mode='contained'
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
               onPress={() => navigation.navigate("Reason")}
             >
-              Make appointment
+              Make a new appointment
             </Button>
-          </Card.Content>
-        </Card>
+          </>
+        ) : (
+          <Card style={styles.bookingCard}>
+            <Card.Content style={styles.bookingCardContent}>
+              <Image
+                source={require("../../assets/images/patient-home.png")}
+                style={styles.bookingImage}
+              />
+              <Text variant='titleMedium' style={styles.bookingTitle}>
+                No booking schedule
+              </Text>
+              <Text variant='bodyMedium' style={styles.bookingDescription}>
+                Seems like you do not have any appointment scheduled today.
+              </Text>
+              <View>
+                <Button
+                  mode='contained'
+                  style={styles.bookButton}
+                  labelStyle={{ color: "white" }}
+                  onPress={() => navigation.navigate("Reason")}
+                >
+                  Make appointment
+                </Button>
+              </View>
+            </Card.Content>
+          </Card>
+        )}
 
         {/* Recent Appointments */}
         <View style={styles.sectionHeader}>
@@ -86,12 +151,12 @@ export default function PatientHome() {
                   <Text variant='titleSmall' style={styles.doctorName}>
                     {appointment.name}
                   </Text>
-                  <Text variant='labelMedium' style={styles.appointmentDate}>
-                    {appointment.date}
-                  </Text>
                 </View>
                 <Text variant='bodySmall' style={styles.appointmentLocation}>
                   {appointment.location}
+                </Text>
+                <Text variant='labelMedium' style={styles.appointmentDate}>
+                  {appointment.date}, {appointment.time}
                 </Text>
               </View>
             </Card.Content>
@@ -196,5 +261,14 @@ const styles = StyleSheet.create({
   },
   appointmentLocation: {
     color: colors.textSecondary,
+    paddingTop: 5,
+  },
+  timeContainer: {
+    paddingTop: 5,
+    flexDirection: "row",
+  },
+  appointmentTime: {
+    color: colors.textSecondary,
+    fontSize: 12,
   },
 });
