@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     elevation: 2,
+    backgroundColor: colors.cardBackground,
   },
   cardHeader: {
     flexDirection: "row",

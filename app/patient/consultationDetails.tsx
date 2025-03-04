@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Image, ScrollView } from "react-native";
-import { Text, Button, Divider, IconButton } from "react-native-paper";
+import { Text, Divider, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import DiagnosisSection from "../components/diagnosisCard";
+import MedicalCertificate from "../components/mcCard";
+import MedicationSection from "../components/medicationCard";
+import Receipt from "../components/receiptCard";
 
 enum TabKey {
   DIAGNOSIS = "Diagnosis",
@@ -29,51 +33,13 @@ export default function ConsultationDetails() {
   const renderContent = () => {
     switch (selectedTab) {
       case TabKey.DIAGNOSIS:
-        return (
-          <View>
-            <Text style={styles.sectionHeading}>Diagnosis</Text>
-            <Text style={styles.sectionTitle}>Your Diagnosis</Text>
-            <Text style={styles.bodyText}>
-              J06.9 – Acute upper respiratory infection, unspecified
-            </Text>
-            <Text style={styles.sectionTitle}>What You Should Do</Text>
-            <Text style={styles.bodyText}>
-              Take a good rest and get well soon!
-            </Text>
-          </View>
-        );
+        return <DiagnosisSection />;
       case TabKey.MEDICATION:
-        return (
-          <View>
-            <Text style={styles.sectionHeading}>Medication</Text>
-            <Text style={styles.bodyText}>
-              1) Paracetamol 500mg – 3 times a day
-              {"\n"}2) Lozenges – 3 times a day
-            </Text>
-          </View>
-        );
+        return <MedicationSection />;
       case TabKey.MEDICAL_CERT:
-        return (
-          <View>
-            <Text style={styles.sectionHeading}>Medical Certificate</Text>
-            <Text style={styles.bodyText}>
-              MC Number: MC/123456
-              {"\n"}Issued: 17 Dec 2024
-              {"\n"}Validity: 2 days
-            </Text>
-          </View>
-        );
+        return <MedicalCertificate />;
       case TabKey.RECEIPT:
-        return (
-          <View>
-            <Text style={styles.sectionHeading}>Receipt</Text>
-            <Text style={styles.bodyText}>
-              Consultation Fee: $25.00
-              {"\n"}Medication Fee: $10.00
-              {"\n"}Total: $35.00
-            </Text>
-          </View>
-        );
+        return <Receipt />;
       default:
         return null;
     }

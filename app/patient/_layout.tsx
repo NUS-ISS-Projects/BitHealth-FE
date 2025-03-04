@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
 import Home from "./home";
+import ConsultationReason from "./consultationReason";
 import Book from "./book";
 import AppointmentDate from "./appointmentDate";
 import ConfirmAppointment from "./confirmAppointment";
@@ -11,6 +12,7 @@ import Confirmed from "./confirmed";
 import PatientSettings from "./settings";
 import PatientHistory from "./history";
 import ConsultationDetails from "./consultationDetails";
+import AppointmentDetails from "./appointmentDetails";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -19,8 +21,10 @@ function AppointmentStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='Home' component={Home} />
+      <Stack.Screen name='Reason' component={ConsultationReason} />
       <Stack.Screen name='Book' component={Book} />
       <Stack.Screen name='AppointmentDate' component={AppointmentDate} />
+      <Stack.Screen name='AppointmentDetails' component={AppointmentDetails} />
       <Stack.Screen name='ConfirmAppointment' component={ConfirmAppointment} />
       <Stack.Screen name='Confirmed' component={Confirmed} />
     </Stack.Navigator>

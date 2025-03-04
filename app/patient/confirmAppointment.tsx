@@ -8,7 +8,7 @@ import {
   Badge,
   IconButton,
 } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 

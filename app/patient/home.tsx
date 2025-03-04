@@ -59,7 +59,7 @@ export default function PatientHome() {
               mode='contained'
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
-              onPress={() => navigation.navigate("Book")}
+              onPress={() => navigation.navigate("Reason")}
             >
               Make appointment
             </Button>
@@ -74,7 +74,11 @@ export default function PatientHome() {
         </View>
 
         {appointments.map((appointment, index) => (
-          <Card key={index} style={styles.appointmentCard}>
+          <Card
+            key={index}
+            style={styles.appointmentCard}
+            onPress={() => navigation.navigate("AppointmentDetails")}
+          >
             <Card.Content style={styles.appointmentCardContent}>
               <Avatar.Image size={50} source={appointment.image} />
               <View style={styles.appointmentDetails}>
