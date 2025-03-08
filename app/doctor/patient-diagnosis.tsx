@@ -29,18 +29,8 @@ export default function PatientDiagnosisScreen() {
     noOfDays: "",
     effectiveFrom: "",
   });
-  const [status, setStatus] = useState("Pending");
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [diagnosis, setDiagnosis] = useState("");
-
-  const handleChange = (field: keyof typeof formData) => (value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleApprove = () => {
-    setStatus("Approved");
-    setLastUpdated(new Date());
-  };
+  const [action, setAction] = useState("");
 
   const handleSave = () => {
     // Add save logic here
@@ -69,6 +59,22 @@ export default function PatientDiagnosisScreen() {
             <TextInput
               value={diagnosis}
               onChangeText={setDiagnosis}
+              mode='outlined'
+              multiline
+              numberOfLines={8}
+              style={styles.diagnosisInput}
+              theme={{
+                colors: {
+                  primary: colors.primary,
+                },
+              }}
+            />
+            <Text style={styles.sectionTitle}>
+              Please provide details on what the patient should do
+            </Text>
+            <TextInput
+              value={action}
+              onChangeText={setAction}
               mode='outlined'
               multiline
               numberOfLines={8}
@@ -126,6 +132,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: colors.textPrimary,
     marginBottom: 20,
+    fontWeight: "bold",
   },
   buttonContainer: {
     flexDirection: "row",
@@ -142,7 +149,7 @@ const styles = StyleSheet.create({
   },
   diagnosisInput: {
     backgroundColor: colors.cardBackground,
-    minHeight: 200,
+    minHeight: 120,
     marginBottom: 20,
     textAlignVertical: "top",
   },

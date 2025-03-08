@@ -20,8 +20,14 @@ export default function PrescriptionDetailsScreen() {
 
   // List of medicine items
   const [medicines, setMedicines] = useState<
-    { medicineName: string; dosage: string; duration: string; notes: string }[]
-  >([{ medicineName: "", dosage: "", duration: "", notes: "" }]);
+    {
+      medicineName: string;
+      purpose: string;
+      dosage: string;
+      duration: string;
+      notes: string;
+    }[]
+  >([{ medicineName: "", purpose: "", dosage: "", duration: "", notes: "" }]);
 
   // Status state and last updated timestamp
   const [status, setStatus] = useState("Pending");
@@ -36,7 +42,10 @@ export default function PrescriptionDetailsScreen() {
 
   // Update a medicine item at a given index
   const handleMedicineChange =
-    (index: number, field: "medicineName" | "dosage" | "duration" | "notes") =>
+    (
+      index: number,
+      field: "medicineName" | "purpose" | "dosage" | "duration" | "notes"
+    ) =>
     (value: string) => {
       const newMedicines = [...medicines];
       newMedicines[index][field] = value;
@@ -47,7 +56,7 @@ export default function PrescriptionDetailsScreen() {
   const handleAddMedicine = () => {
     setMedicines([
       ...medicines,
-      { medicineName: "", dosage: "", duration: "", notes: "" },
+      { medicineName: "", purpose: "", dosage: "", duration: "", notes: "" },
     ]);
   };
 
@@ -64,7 +73,6 @@ export default function PrescriptionDetailsScreen() {
   const handleApprove = () => {
     setStatus("Approved");
     setLastUpdated(new Date());
-    // Here you would also trigger any save or API update
   };
 
   return (
@@ -124,6 +132,15 @@ export default function PrescriptionDetailsScreen() {
                 mode='outlined'
                 value={medicine.medicineName}
                 onChangeText={handleMedicineChange(index, "medicineName")}
+                style={styles.input}
+                theme={{ colors: { primary: colors.primary } }}
+              />
+              <TextInput
+                label='Purpose'
+                placeholder='e.g. For fever'
+                mode='outlined'
+                value={medicine.purpose}
+                onChangeText={handleMedicineChange(index, "purpose")}
                 style={styles.input}
                 theme={{ colors: { primary: colors.primary } }}
               />
