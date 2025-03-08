@@ -7,14 +7,14 @@ import colors from "../theme/colors";
 const appointments = [
   {
     name: "Dr. Budi Sound",
-    location: "Komuk Express Semarang",
+    reason: "Annual Checkup",
     date: "21 May",
     time: "10:00 AM",
     image: require("../../assets/images/favicon.png"),
   },
   {
     name: "Dr. Anastasia",
-    location: "Komuk Express Bali",
+    reason: "Annual Checkup",
     date: "17 May",
     time: "10:00 AM",
     image: require("../../assets/images/favicon.png"),
@@ -24,7 +24,7 @@ const appointments = [
 const upcomingAppointments = [
   {
     name: "Dr. Eugene Huang",
-    location: "Komuk Express Jakarta",
+    reason: "General Checkup",
     date: "24 May",
     time: "10:00 AM",
     image: require("../../assets/images/favicon.png"),
@@ -77,11 +77,8 @@ export default function PatientHome() {
                         {appointment.name}
                       </Text>
                     </View>
-                    <Text
-                      variant='bodySmall'
-                      style={styles.appointmentLocation}
-                    >
-                      {appointment.location}
+                    <Text variant='bodySmall' style={styles.appointmentReason}>
+                      {appointment.reason}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
@@ -152,8 +149,8 @@ export default function PatientHome() {
                     {appointment.name}
                   </Text>
                 </View>
-                <Text variant='bodySmall' style={styles.appointmentLocation}>
-                  {appointment.location}
+                <Text variant='bodySmall' style={styles.appointmentReason}>
+                  {appointment.reason}
                 </Text>
                 <Text variant='labelMedium' style={styles.appointmentDate}>
                   {appointment.date}, {appointment.time}
@@ -259,7 +256,7 @@ const styles = StyleSheet.create({
   appointmentDate: {
     color: colors.primary,
   },
-  appointmentLocation: {
+  appointmentReason: {
     color: colors.textSecondary,
     paddingTop: 5,
   },

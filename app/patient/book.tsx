@@ -10,7 +10,6 @@ const doctors = [
     id: 1,
     name: "Dr. Budi Sound",
     specialty: "Aesthetic Doctor",
-    rating: 5.0,
     reviews: 780,
     image: require("../../assets/images/favicon.png"),
   },
@@ -18,7 +17,6 @@ const doctors = [
     id: 2,
     name: "Dr. Sober Roam",
     specialty: "Aesthetic Doctor",
-    rating: 4.9,
     reviews: 422,
     image: require("../../assets/images/favicon.png"),
   },
@@ -26,7 +24,6 @@ const doctors = [
     id: 3,
     name: "Dr. Anastasia Satset",
     specialty: "Aesthetic Doctor",
-    rating: 4.9,
     reviews: 128,
     image: require("../../assets/images/favicon.png"),
   },
@@ -34,7 +31,6 @@ const doctors = [
     id: 4,
     name: "Dr. Eni Teri",
     specialty: "Aesthetic Doctor",
-    rating: 4.8,
     reviews: 76,
     image: require("../../assets/images/favicon.png"),
   },
@@ -42,7 +38,6 @@ const doctors = [
     id: 5,
     name: "Dr. Widi Striker",
     specialty: "Aesthetic Doctor",
-    rating: 4.7,
     reviews: 45,
     image: require("../../assets/images/favicon.png"),
   },
@@ -50,7 +45,6 @@ const doctors = [
     id: 6,
     name: "Dr. Goh",
     specialty: "Aesthetic Doctor",
-    rating: 4.7,
     reviews: 45,
     image: require("../../assets/images/favicon.png"),
   },
@@ -58,7 +52,6 @@ const doctors = [
     id: 7,
     name: "Dr. Tan",
     specialty: "Aesthetic Doctor",
-    rating: 4.7,
     reviews: 45,
     image: require("../../assets/images/favicon.png"),
   },
@@ -127,19 +120,6 @@ export default function SelectDoctor() {
                         ]}
                       >
                         {doctor.specialty}
-                      </Text>
-                      <Text
-                        style={[styles.dot, isSelected && styles.selectedDot]}
-                      >
-                        ·
-                      </Text>
-                      <Text
-                        style={[
-                          styles.rating,
-                          isSelected && styles.selectedRating,
-                        ]}
-                      >
-                        ⭐ {doctor.rating} ({doctor.reviews})
                       </Text>
                     </View>
                   </View>
@@ -249,21 +229,6 @@ const styles = StyleSheet.create({
     paddingRight: 5,
   },
   selectedSpecialty: {
-    color: colors.accent,
-  },
-  rating: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-  },
-  selectedRating: {
-    color: colors.accent,
-  },
-  dot: {
-    fontSize: 15,
-    color: "rgba(255, 255, 255, 0.8)",
-    paddingHorizontal: 5,
-  },
-  selectedDot: {
     color: colors.accent,
   },
   buttonContainer: {

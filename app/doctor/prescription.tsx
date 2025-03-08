@@ -16,6 +16,10 @@ const PrescriptionScreen: React.FC = () => {
 
   const navigation = useNavigation<NavigationProp<any>>();
 
+  const handleDiagnosis = () => {
+    navigation.navigate("PatientDiagnosis", { appointmentId });
+  };
+
   const handleMedicalCertificate = () => {
     navigation.navigate("MedicalCertificate", { appointmentId });
   };
@@ -39,7 +43,7 @@ const PrescriptionScreen: React.FC = () => {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Appointment Request</Text>
+        <Text style={styles.headerBar}>Appointment Details</Text>
       </View>
       {/* Patient Details Card */}
       <Card style={styles.card}>
@@ -69,6 +73,17 @@ const PrescriptionScreen: React.FC = () => {
           mode='outlined'
           style={styles.outlinedButton}
           labelStyle={styles.outlinedButtonText}
+          onPress={handleDiagnosis}
+          icon={() => (
+            <FontAwesome name='stethoscope' size={20} color={colors.primary} />
+          )}
+        >
+          Diagnosis
+        </Button>
+        <Button
+          mode='outlined'
+          style={styles.outlinedButton}
+          labelStyle={styles.outlinedButtonText}
           onPress={handleMedicalCertificate}
           icon={() => (
             <FontAwesome name='file-text-o' size={20} color={colors.primary} />
@@ -82,7 +97,7 @@ const PrescriptionScreen: React.FC = () => {
           labelStyle={styles.outlinedButtonText}
           onPress={handlePrescription}
           icon={() => (
-            <FontAwesome name='stethoscope' size={20} color={colors.primary} />
+            <FontAwesome name='star' size={20} color={colors.primary} />
           )}
         >
           Prescription
@@ -120,7 +135,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 55,
+    paddingLeft: 50,
   },
   cardHeaderContainer: {
     paddingHorizontal: 20,

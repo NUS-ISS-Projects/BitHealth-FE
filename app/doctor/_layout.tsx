@@ -7,6 +7,7 @@ import DoctorDashboard from "./dashboard";
 import PrescriptionScreen from "./prescription";
 import MedicalCertificateScreen from "./medical-certificate";
 import PrescriptionDetailsScreen from "./prescription-details";
+import PatientDiagnosisScreen from "./patient-diagnosis";
 import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
 
@@ -18,6 +19,10 @@ function DashboardStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='DashboardMain' component={DoctorDashboard} />
       <Stack.Screen name='Prescription' component={PrescriptionScreen} />
+      <Stack.Screen
+        name='PatientDiagnosis'
+        component={PatientDiagnosisScreen}
+      />
       <Stack.Screen
         name='MedicalCertificate'
         component={MedicalCertificateScreen}
@@ -35,6 +40,10 @@ function AppointmentStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='Appointments' component={AppointmentsScreen} />
       <Stack.Screen name='Prescription' component={PrescriptionScreen} />
+      <Stack.Screen
+        name='PatientDiagnosis'
+        component={PatientDiagnosisScreen}
+      />
       <Stack.Screen
         name='MedicalCertificate'
         component={MedicalCertificateScreen}

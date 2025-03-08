@@ -13,8 +13,7 @@ import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 export default function AppointmentDate() {
   registerTranslation("en", enGB);
-  const { doctor = "Dr. Budi Sound", location = "Komuk Express Semarang" } =
-    useLocalSearchParams();
+  const { doctor = "Dr. Budi Sound" } = useLocalSearchParams();
   const navigation = useNavigation<NavigationProp<any>>();
   const [date, setDate] = useState<Date | null>(null);
   const [time, setTime] = useState<string | null>(null);
@@ -71,19 +70,7 @@ export default function AppointmentDate() {
               </Text>
               <View style={{ flexDirection: "row" }}>
                 <Text style={styles.specialty}>Aesthetic Doctor</Text>
-                <Text style={styles.dot}>·</Text>
-                <Text style={styles.rating}>⭐ 5.0 (780)</Text>
               </View>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          <View>
-            <View style={styles.locationRow}>
-              <Text style={styles.label}>📍 Location</Text>
-              <Text style={[styles.value]}>{location}</Text>
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.directions}>Directions</Text>
             </View>
           </View>
         </Card.Content>
@@ -213,25 +200,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  rating: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  dot: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    paddingHorizontal: 5,
-  },
   divider: {
     height: 1,
     backgroundColor: "#E5E5E5",
     marginVertical: 5,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
   },
   value: {
     fontSize: 12,

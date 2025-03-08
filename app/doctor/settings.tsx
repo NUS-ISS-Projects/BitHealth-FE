@@ -7,10 +7,17 @@ export default function DoctorSettings() {
   const [fullName, setFullName] = useState("Dr. Budi Sound");
   const [email, setEmail] = useState("budi@example.com");
   const [phone, setPhone] = useState("+62 812 3456 7890");
+  const [avatar, setAvatar] = useState("");
   const [specialty, setSpecialty] = useState("Aesthetic Doctor");
 
   const handleSave = () => {
-    console.log("Profile saved", { fullName, email, phone, specialty });
+    console.log("Profile saved", {
+      fullName,
+      email,
+      phone,
+      specialty,
+      avatar,
+    });
   };
 
   return (
@@ -38,6 +45,18 @@ export default function DoctorSettings() {
         }}
       />
       <TextInput
+        label='Specialty'
+        mode='outlined'
+        value={specialty}
+        onChangeText={setSpecialty}
+        style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+      />
+      <TextInput
         label='Email'
         mode='outlined'
         value={email}
@@ -56,18 +75,6 @@ export default function DoctorSettings() {
         value={phone}
         onChangeText={setPhone}
         keyboardType='phone-pad'
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.primary,
-          },
-        }}
-      />
-      <TextInput
-        label='Specialty'
-        mode='outlined'
-        value={specialty}
-        onChangeText={setSpecialty}
         style={styles.input}
         theme={{
           colors: {

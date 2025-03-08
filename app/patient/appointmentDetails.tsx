@@ -17,7 +17,6 @@ export default function AppointmentDetails() {
   const appointment = {
     doctorName: "Dr. Budi Sound",
     specialty: "General Practitioner",
-    location: "Komuk Express Semarang",
     date: "21 May 2024",
     time: "10:00 AM",
     status: "Completed",
@@ -82,11 +81,6 @@ export default function AppointmentDetails() {
             />
             <DetailRow icon='calendar' label='Date' value={appointment.date} />
             <DetailRow icon='clock-o' label='Time' value={appointment.time} />
-            <DetailRow
-              icon='map-marker'
-              label='Location'
-              value={appointment.location}
-            />
           </View>
           <Divider style={styles.divider} />
           <View style={styles.reasonSection}>

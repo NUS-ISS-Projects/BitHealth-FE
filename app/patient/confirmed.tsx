@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
@@ -9,8 +9,7 @@ import { useNavigation, NavigationProp } from "@react-navigation/native";
 export default function AppointmentConfirmed() {
   const {
     doctor = "Dr. John Smith",
-    date,
-    location = "Komuk Express Semarang",
+    date = "July 4, 2024",
     time = "09:00",
   } = useLocalSearchParams();
   const navigation = useNavigation<NavigationProp<any>>();
@@ -31,8 +30,7 @@ export default function AppointmentConfirmed() {
         <Text style={styles.boldText}>
           {new Date(Array.isArray(date) ? date[0] : date).toDateString()}
         </Text>
-        , <Text style={styles.boldText}>{time}</Text> at{" "}
-        <Text style={styles.boldText}>{location}</Text> is confirmed.
+        , <Text style={styles.boldText}>{time}</Text> is confirmed.
       </Text>
 
       {/* Proceed Button */}

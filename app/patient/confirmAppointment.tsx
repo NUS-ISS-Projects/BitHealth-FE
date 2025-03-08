@@ -16,7 +16,6 @@ export default function ConfirmAppointment() {
   const {
     doctor,
     date = "July 4, 2024",
-    location = "Komuk Express Semarang",
     time = "09:00",
   } = useLocalSearchParams();
   const navigation = useNavigation<NavigationProp<any>>();
@@ -69,27 +68,23 @@ export default function ConfirmAppointment() {
               </Text>
               <View style={{ flexDirection: "row" }}>
                 <Text style={styles.specialty}>Aesthetic Doctor</Text>
-                <Text style={styles.dot}>·</Text>
-                <Text style={styles.rating}>⭐ 5.0 (780)</Text>
               </View>
             </View>
           </View>
           <View style={styles.divider} />
 
-          {/* Date and Location */}
+          {/* Date and Time */}
           <View style={styles.infoRow}>
             <Text style={styles.label}>📅 Date</Text>
             <Text style={styles.value}>{date}</Text>
           </View>
           <View style={styles.divider} />
           <View>
-            <View style={styles.locationRow}>
-              <Text style={styles.label}>📍 Location</Text>
-              <Text style={[styles.value]}>{location}</Text>
+            <View style={styles.TimeRow}>
+              <Text style={styles.label}>🕙 Time</Text>
+              <Text style={[styles.value]}>{time}</Text>
             </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.directions}>Directions</Text>
-            </View>
+            <View style={{ alignItems: "flex-end" }}></View>
           </View>
         </Card.Content>
       </Card>
@@ -187,10 +182,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  rating: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
   dot: {
     fontSize: 15,
     color: colors.textSecondary,
@@ -216,7 +207,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: "bold",
   },
-  locationRow: {
+  TimeRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
