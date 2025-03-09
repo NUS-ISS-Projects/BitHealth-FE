@@ -1,9 +1,17 @@
 import React from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, Card, Avatar, IconButton, Divider } from "react-native-paper";
+import {
+  Text,
+  Card,
+  Avatar,
+  IconButton,
+  Divider,
+  Button,
+} from "react-native-paper";
 import { useRouter } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 interface DetailRowProps {
   icon: keyof typeof FontAwesome.glyphMap;
@@ -13,13 +21,27 @@ interface DetailRowProps {
 
 export default function AppointmentDetails() {
   const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
+
+  const handleReschedule = () => {
+    navigation.navigate("AppointmentDate", {
+      isRescheduling: true,
+      appointmentId: appointment.bookingId,
+      currentDate: appointment.date,
+      currentTime: appointment.time,
+    });
+  };
+
+  const handleDelete = () => {
+    navigation.goBack();
+  };
 
   const appointment = {
     doctorName: "Dr. Budi Sound",
     specialty: "General Practitioner",
-    date: "21 May 2024",
+    date: "2024-05-21",
     time: "10:00 AM",
-    status: "Completed",
+    status: "Pending",
     bookingId: "BH-2024-001",
     image: require("../../assets/images/favicon.png"),
     reason: "I am down with a fever",
@@ -91,6 +113,29 @@ export default function AppointmentDetails() {
           </View>
         </Card.Content>
       </Card>
+      {(appointment.status === "Pending" ||
+        appointment.status === "Confirmed") && (
+        <View style={styles.actionButtons}>
+          <Button
+            mode='outlined'
+            icon='calendar'
+            onPress={handleReschedule}
+            style={styles.rescheduleButton}
+            labelStyle={styles.rescheduleButtonLabel}
+          >
+            Reschedule Appointment
+          </Button>
+          <Button
+            mode='contained'
+            icon='delete'
+            onPress={handleDelete}
+            style={styles.deleteButton}
+            labelStyle={styles.deleteButtonLabel}
+          >
+            Cancel Appointment
+          </Button>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -120,7 +165,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: colors.primary,
-    paddingLeft: 60,
+    paddingLeft: 50,
   },
   card: {
     backgroundColor: colors.cardBackground,
@@ -209,5 +254,25 @@ const styles = StyleSheet.create({
   buttonLabel: {
     fontSize: 16,
     color: "#FFFFFF",
+  },
+  actionButtons: {
+    gap: 15,
+    marginTop: 10,
+  },
+  rescheduleButton: {
+    borderColor: colors.primary,
+    borderWidth: 1,
+  },
+  rescheduleButtonLabel: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  deleteButton: {
+    backgroundColor: "#DC3545",
+  },
+  deleteButtonLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
   },
 });

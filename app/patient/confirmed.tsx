@@ -5,14 +5,44 @@ import { useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+
+type AppointmentParams = {
+  doctor: string;
+  isRescheduling: boolean;
+  appointmentId: string;
+  newDate?: string | Date | number[];
+  newTime?: string | number[];
+};
 
 export default function AppointmentConfirmed() {
-  const {
-    doctor = "Dr. John Smith",
-    date = "July 4, 2024",
-    time = "09:00",
-  } = useLocalSearchParams();
+  const route = useRoute();
+  const { doctor, isRescheduling, appointmentId, newDate, newTime } =
+    route.params as AppointmentParams;
   const navigation = useNavigation<NavigationProp<any>>();
+
+  const getMessage = () => {
+    if (isRescheduling) {
+      return {
+        header: "Appointment Rescheduled!",
+        subText: `Your appointment with ${doctor} has been rescheduled to ${new Date(
+          Array.isArray(newDate)
+            ? newDate[0] ?? new Date()
+            : newDate ?? new Date()
+        ).toDateString()}, ${newTime}.`,
+      };
+    }
+    return {
+      header: "Appointment Confirmed!",
+      subText: `Your appointment with ${doctor} on ${new Date(
+        Array.isArray(newDate)
+          ? newDate[0] ?? new Date()
+          : newDate ?? new Date()
+      ).toDateString()}, ${newTime} is confirmed.`,
+    };
+  };
+
+  const { header, subText } = getMessage();
 
   return (
     <View style={styles.container}>
@@ -24,14 +54,8 @@ export default function AppointmentConfirmed() {
       />
 
       {/* Confirmation Message */}
-      <Text style={styles.header}>Appointment Confirmed!</Text>
-      <Text style={styles.subText}>
-        Your appointment with {doctor} on{" "}
-        <Text style={styles.boldText}>
-          {new Date(Array.isArray(date) ? date[0] : date).toDateString()}
-        </Text>
-        , <Text style={styles.boldText}>{time}</Text> is confirmed.
-      </Text>
+      <Text style={styles.header}>{header}</Text>
+      <Text style={styles.subText}>{subText}</Text>
 
       {/* Proceed Button */}
       <Button

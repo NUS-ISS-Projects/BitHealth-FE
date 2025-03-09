@@ -8,20 +8,35 @@ import {
   Badge,
   IconButton,
 } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+
+type AppointmentParams = {
+  doctor: string;
+  isRescheduling: boolean;
+  appointmentId: string;
+  newDate?: string | Date | number[];
+  newTime?: string | number[];
+};
 
 export default function ConfirmAppointment() {
-  const {
-    doctor,
-    date = "July 4, 2024",
-    time = "09:00",
-  } = useLocalSearchParams();
   const navigation = useNavigation<NavigationProp<any>>();
+  const route = useRoute();
+  const { doctor, isRescheduling, appointmentId, newDate, newTime } =
+    route.params as AppointmentParams;
 
   const handleBooking = () => {
-    navigation.navigate("Confirmed");
+    if (isRescheduling) {
+      navigation.navigate("Confirmed", {
+        isRescheduling: true,
+        appointmentId,
+        newDate,
+        newTime,
+      });
+    } else {
+      navigation.navigate("Confirmed");
+    }
   };
 
   return (
@@ -76,13 +91,13 @@ export default function ConfirmAppointment() {
           {/* Date and Time */}
           <View style={styles.infoRow}>
             <Text style={styles.label}>📅 Date</Text>
-            <Text style={styles.value}>{date}</Text>
+            <Text style={styles.value}>{String(newDate)}</Text>
           </View>
           <View style={styles.divider} />
           <View>
             <View style={styles.TimeRow}>
               <Text style={styles.label}>🕙 Time</Text>
-              <Text style={[styles.value]}>{time}</Text>
+              <Text style={[styles.value]}>{newTime}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}></View>
           </View>
@@ -96,7 +111,7 @@ export default function ConfirmAppointment() {
         labelStyle={styles.bookButtonText}
         onPress={handleBooking}
       >
-        Book now
+        {isRescheduling ? "Reschedule now" : "Book now"}
       </Button>
     </ScrollView>
   );

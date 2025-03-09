@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button, Avatar, Card, IconButton } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
+import { useRoute } from "@react-navigation/native";
 import {
   enGB,
   registerTranslation,
@@ -11,14 +12,40 @@ import {
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 
+type AppointmentParams = {
+  doctor: string;
+  isRescheduling: boolean;
+  appointmentId: string;
+  currentDate?: string | Date | number[];
+  currentTime?: string | number[];
+};
+
 export default function AppointmentDate() {
   registerTranslation("en", enGB);
-  const { doctor = "Dr. Budi Sound" } = useLocalSearchParams();
+  const route = useRoute();
+  const { doctor, isRescheduling, appointmentId, currentDate, currentTime } =
+    route.params as AppointmentParams;
   const navigation = useNavigation<NavigationProp<any>>();
-  const [date, setDate] = useState<Date | null>(null);
-  const [time, setTime] = useState<string | null>(null);
+  const [date, setDate] = useState<Date | null>(
+    isRescheduling && currentDate
+      ? new Date(Array.isArray(currentDate) ? currentDate[0] : currentDate)
+      : null
+  );
+  const [time, setTime] = useState<string | null>(
+    isRescheduling
+      ? typeof currentTime === "string"
+        ? currentTime
+        : Array.isArray(currentTime)
+        ? String(currentTime[0])
+        : null
+      : null
+  );
   const [openDatePicker, setOpenDatePicker] = useState(false);
   const [openTimePicker, setOpenTimePicker] = useState(false);
+
+  const headerText = isRescheduling
+    ? "Reschedule Appointment"
+    : "Select date and time";
 
   const handleDateConfirm = (params: any) => {
     setOpenDatePicker(false);
@@ -32,6 +59,19 @@ export default function AppointmentDate() {
     );
   };
 
+  const handleNext = () => {
+    if (isRescheduling) {
+      navigation.navigate("ConfirmAppointment", {
+        isRescheduling: true,
+        appointmentId,
+        newDate: date?.toISOString(),
+        newTime: time,
+      });
+    } else {
+      navigation.navigate("ConfirmAppointment");
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerBarContainer}>
@@ -43,18 +83,20 @@ export default function AppointmentDate() {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Select date and time</Text>
+        <Text style={styles.headerBar}>{headerText}</Text>
       </View>
       {/* Header */}
-      <View style={styles.headerContainer}>
-        <View>
-          <Text style={styles.header}>When</Text>
-          <Text style={styles.header}>are you free?</Text>
+      {!isRescheduling && (
+        <View style={styles.headerContainer}>
+          <View>
+            <Text style={styles.header}>When</Text>
+            <Text style={styles.header}>are you free?</Text>
+          </View>
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>3/4</Text>
+          </View>
         </View>
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>3/4</Text>
-        </View>
-      </View>
+      )}
 
       {/* Doctor Card */}
       <Card style={styles.card}>
@@ -128,10 +170,10 @@ export default function AppointmentDate() {
         mode='contained'
         style={styles.nextButton}
         labelStyle={styles.nextButtonText}
-        onPress={() => navigation.navigate("ConfirmAppointment")}
-        disabled={!date}
+        onPress={handleNext}
+        disabled={!date || !time}
       >
-        Next
+        {isRescheduling ? "Confirm New Schedule" : "Next"}
       </Button>
     </ScrollView>
   );
@@ -152,7 +194,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 55,
+    paddingLeft: 40,
   },
   headerContainer: {
     flexDirection: "row",
