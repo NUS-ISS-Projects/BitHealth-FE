@@ -11,51 +11,59 @@ const doctors = [
     name: "Dr. Budi Sound",
     specialty: "Aesthetic Doctor",
     reviews: 780,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 2,
     name: "Dr. Sober Roam",
     specialty: "Aesthetic Doctor",
     reviews: 422,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 3,
     name: "Dr. Anastasia Satset",
     specialty: "Aesthetic Doctor",
     reviews: 128,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 4,
     name: "Dr. Eni Teri",
     specialty: "Aesthetic Doctor",
     reviews: 76,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 5,
     name: "Dr. Widi Striker",
     specialty: "Aesthetic Doctor",
     reviews: 45,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 6,
     name: "Dr. Goh",
     specialty: "Aesthetic Doctor",
     reviews: 45,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 7,
     name: "Dr. Tan",
     specialty: "Aesthetic Doctor",
     reviews: 45,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
 ];
+
+const getAvatarSource = (doctor: (typeof doctors)[0]) => {
+  if (doctor.image) {
+    return doctor.image;
+  }
+  // Generate a random avatar using UI Avatars service
+  return { uri: `https://i.pravatar.cc/50?img=${doctor.id}` };
+};
 
 export default function SelectDoctor() {
   const [selectedDoctor, setSelectedDoctor] = useState<
@@ -102,7 +110,7 @@ export default function SelectDoctor() {
             >
               <Card style={[styles.card, isSelected && styles.selectedCard]}>
                 <Card.Content style={styles.cardContent}>
-                  <Avatar.Image size={50} source={doctor.image} />
+                  <Avatar.Image size={50} source={getAvatarSource(doctor)} />
                   <View style={styles.doctorInfo}>
                     <Text
                       style={[

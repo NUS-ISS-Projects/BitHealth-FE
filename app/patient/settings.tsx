@@ -36,6 +36,13 @@ export default function PatientSettings() {
         if (patientData.dateOfBirth) {
           setDateOfBirth(new Date(patientData.dateOfBirth));
         }
+        if (patientData.avatar) {
+          setAvatar(
+            patientData.avatar.startsWith("data:image")
+              ? patientData.avatar
+              : `data:image/jpeg;base64,${patientData.avatar}`
+          );
+        }
       } catch (error) {
         console.error("Failed to load patient data:", error);
       } finally {
@@ -58,7 +65,7 @@ export default function PatientSettings() {
   const handleAvatarSelect = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"],
         allowsEditing: true,
         base64: true,
       });

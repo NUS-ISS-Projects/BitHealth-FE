@@ -10,14 +10,12 @@ const appointments = [
     reason: "Annual Checkup",
     date: "21 May",
     time: "10:00 AM",
-    image: require("../../assets/images/favicon.png"),
   },
   {
     name: "Dr. Anastasia",
     reason: "Annual Checkup",
     date: "17 May",
     time: "10:00 AM",
-    image: require("../../assets/images/favicon.png"),
   },
 ];
 
@@ -27,10 +25,22 @@ const upcomingAppointments = [
     reason: "General Checkup",
     date: "24 May",
     time: "10:00 AM",
-    image: require("../../assets/images/favicon.png"),
     status: "Upcoming",
   },
 ];
+
+const getAvatarSource = (doctor: {
+  name: string;
+  id?: number;
+  image?: any;
+}) => {
+  if (doctor.image) {
+    return doctor.image;
+  }
+  // Use name as seed if no ID is available
+  const seed = doctor.id || doctor.name.length;
+  return { uri: `https://i.pravatar.cc/50?img=${seed}` };
+};
 
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -70,7 +80,10 @@ export default function PatientHome() {
                 onPress={() => navigation.navigate("AppointmentDetails")}
               >
                 <Card.Content style={styles.appointmentCardContent}>
-                  <Avatar.Image size={50} source={appointment.image} />
+                  <Avatar.Image
+                    size={50}
+                    source={getAvatarSource(appointment)}
+                  />
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
                       <Text variant='titleSmall' style={styles.doctorName}>
@@ -142,7 +155,7 @@ export default function PatientHome() {
             onPress={() => navigation.navigate("AppointmentDetails")}
           >
             <Card.Content style={styles.appointmentCardContent}>
-              <Avatar.Image size={50} source={appointment.image} />
+              <Avatar.Image size={50} source={getAvatarSource(appointment)} />
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
                   <Text variant='titleSmall' style={styles.doctorName}>
