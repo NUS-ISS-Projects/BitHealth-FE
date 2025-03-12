@@ -8,37 +8,45 @@ import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
 
 type AppointmentParams = {
-  doctor: string;
+  doctorName: string;
+  appointmentDate: string;
+  appointmentTime: string;
   isRescheduling: boolean;
-  appointmentId: string;
-  newDate?: string | Date | number[];
-  newTime?: string | number[];
 };
 
 export default function AppointmentConfirmed() {
   const route = useRoute();
-  const { doctor, isRescheduling, appointmentId, newDate, newTime } =
+  const { doctorName, appointmentDate, appointmentTime, isRescheduling } =
     route.params as AppointmentParams;
   const navigation = useNavigation<NavigationProp<any>>();
+
+  const formatDate = (date: string) => {
+    const [year, month, day] = date.split("-");
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "pm" : "am";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
+  };
 
   const getMessage = () => {
     if (isRescheduling) {
       return {
         header: "Appointment Rescheduled!",
-        subText: `Your appointment with ${doctor} has been rescheduled to ${new Date(
-          Array.isArray(newDate)
-            ? newDate[0] ?? new Date()
-            : newDate ?? new Date()
-        ).toDateString()}, ${newTime}.`,
+        subText: `Your appointment with ${doctorName} has been rescheduled to ${formatDate(
+          appointmentDate
+        )}, ${formatTime(appointmentTime)}.`,
       };
     }
     return {
       header: "Appointment Confirmed!",
-      subText: `Your appointment with ${doctor} on ${new Date(
-        Array.isArray(newDate)
-          ? newDate[0] ?? new Date()
-          : newDate ?? new Date()
-      ).toDateString()}, ${newTime} is confirmed.`,
+      subText: `Your appointment with ${doctorName} on ${formatDate(
+        appointmentDate
+      )}, ${formatTime(appointmentTime)} is confirmed.`,
     };
   };
 

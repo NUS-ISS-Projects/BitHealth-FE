@@ -26,6 +26,8 @@ export default function AppointmentDetails() {
   const handleReschedule = () => {
     navigation.navigate("AppointmentDate", {
       isRescheduling: true,
+      doctorName: appointment.doctorName,
+      specialty: appointment.specialty,
       appointmentId: appointment.bookingId,
       currentDate: appointment.date,
       currentTime: appointment.time,

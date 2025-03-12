@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button, Avatar, Card, IconButton } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
-import { useRoute } from "@react-navigation/native";
 import {
   enGB,
   registerTranslation,
@@ -10,10 +8,18 @@ import {
   TimePickerModal,
 } from "react-native-paper-dates";
 import colors from "../theme/colors";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 
 type AppointmentParams = {
-  doctor: string;
+  doctorId: number;
+  doctorName: string;
+  specialty: string;
+  reason?: string;
+  checkupType?: string;
   isRescheduling: boolean;
   appointmentId: string;
   currentDate?: string | Date | number[];
@@ -23,8 +29,17 @@ type AppointmentParams = {
 export default function AppointmentDate() {
   registerTranslation("en", enGB);
   const route = useRoute();
-  const { doctor, isRescheduling, appointmentId, currentDate, currentTime } =
-    route.params as AppointmentParams;
+  const {
+    doctorId,
+    doctorName,
+    specialty,
+    reason,
+    checkupType,
+    isRescheduling,
+    appointmentId,
+    currentDate,
+    currentTime,
+  } = route.params as AppointmentParams;
   const navigation = useNavigation<NavigationProp<any>>();
   const [date, setDate] = useState<Date | null>(
     isRescheduling && currentDate
@@ -60,15 +75,34 @@ export default function AppointmentDate() {
   };
 
   const handleNext = () => {
+    // Format date to YYYY-MM-DD
+    const formattedDate = date
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-${String(date.getDate()).padStart(2, "0")}`
+      : null;
+
+    // Format time to HH:mm:ss
+    const formattedTime = time ? `${time}:00` : null;
+
     if (isRescheduling) {
       navigation.navigate("ConfirmAppointment", {
         isRescheduling: true,
         appointmentId,
-        newDate: date?.toISOString(),
-        newTime: time,
+        newDate: formattedDate,
+        newTime: formattedTime,
       });
     } else {
-      navigation.navigate("ConfirmAppointment");
+      navigation.navigate("ConfirmAppointment", {
+        doctorId,
+        doctorName,
+        specialty,
+        reason,
+        checkupType,
+        appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
+      });
     }
   };
 
@@ -108,10 +142,10 @@ export default function AppointmentDate() {
             />
             <View style={styles.doctorInfo}>
               <Text style={styles.doctorName}>
-                {doctor || "Dr. Budi Sound"}
+                {doctorName || "Dr. Budi Sound"}
               </Text>
               <View style={{ flexDirection: "row" }}>
-                <Text style={styles.specialty}>Aesthetic Doctor</Text>
+                <Text style={styles.specialty}>{specialty}</Text>
               </View>
             </View>
           </View>

@@ -48,8 +48,27 @@ export default function ConsultationReason() {
   const [selectedOption, setSelectedOption] = useState("");
   const [expandedSpecialty, setExpandedSpecialty] = useState("");
 
+  const getSelectedOptionDetails = () => {
+    for (const specialty of checkupTypes) {
+      const option = specialty.options.find((opt) => opt.id === selectedOption);
+      if (option) {
+        return {
+          specialty: specialty.specialty,
+          optionName: option.name,
+        };
+      }
+    }
+    return null;
+  };
+
   const handleContinue = () => {
-    navigation.navigate("Book");
+    const selectedDetails = getSelectedOptionDetails();
+    if (selectedDetails) {
+      navigation.navigate("Book", {
+        reason: reason.trim(),
+        checkupType: selectedDetails.optionName,
+      });
+    }
   };
 
   const handleOptionSelect = (optionId: string) => {

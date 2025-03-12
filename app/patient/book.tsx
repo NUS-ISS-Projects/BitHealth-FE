@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { IconButton, Text, Button, Avatar, Card } from "react-native-paper";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import {
+  useRoute,
+  useNavigation,
+  NavigationProp,
+} from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import colors from "../theme/colors";
 
@@ -57,6 +61,11 @@ const doctors = [
   },
 ];
 
+type BookScreenParams = {
+  reason: string;
+  checkupType: string;
+};
+
 const getAvatarSource = (doctor: (typeof doctors)[0]) => {
   if (doctor.image) {
     return doctor.image;
@@ -70,6 +79,21 @@ export default function SelectDoctor() {
     (typeof doctors)[0] | null
   >(null);
   const navigation = useNavigation<NavigationProp<any>>();
+  const route = useRoute();
+  const { reason, checkupType } = route.params as BookScreenParams;
+
+  const handleNext = () => {
+    if (selectedDoctor) {
+      navigation.navigate("AppointmentDate", {
+        doctorId: selectedDoctor.id,
+        doctorName: selectedDoctor.name,
+        specialty: selectedDoctor.specialty,
+        reason: reason,
+        checkupType: checkupType,
+        isRescheduling: false,
+      });
+    }
+  };
 
   return (
     <LinearGradient
@@ -144,7 +168,7 @@ export default function SelectDoctor() {
           mode='contained'
           style={styles.nextButton}
           labelStyle={styles.nextButtonText}
-          onPress={() => navigation.navigate("AppointmentDate")}
+          onPress={handleNext}
           disabled={!selectedDoctor}
         >
           Next

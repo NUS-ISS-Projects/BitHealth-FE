@@ -11,32 +11,85 @@ import {
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
+import axios from "axios";
+import { API_URL } from "@env";
 
 type AppointmentParams = {
-  doctor: string;
+  doctorId: number;
+  doctorName: string;
+  specialty: string;
+  reason?: string;
+  checkupType?: string;
+  appointmentDate: string;
+  appointmentTime: string;
   isRescheduling: boolean;
-  appointmentId: string;
-  newDate?: string | Date | number[];
-  newTime?: string | number[];
+  appointmentId?: string;
 };
 
 export default function ConfirmAppointment() {
   const navigation = useNavigation<NavigationProp<any>>();
   const route = useRoute();
-  const { doctor, isRescheduling, appointmentId, newDate, newTime } =
-    route.params as AppointmentParams;
+  const {
+    doctorId,
+    doctorName,
+    specialty,
+    reason,
+    checkupType,
+    appointmentDate,
+    appointmentTime,
+    isRescheduling,
+    appointmentId,
+  } = route.params as AppointmentParams;
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (isRescheduling) {
       navigation.navigate("Confirmed", {
-        isRescheduling: true,
         appointmentId,
-        newDate,
-        newTime,
+        newDate: appointmentDate,
+        newTime: appointmentTime,
+        isRescheduling: true,
       });
     } else {
-      navigation.navigate("Confirmed");
+      try {
+        const appointmentData = {
+          patientId: 1, // TODO: Get this from user context/auth
+          doctorId: doctorId,
+          appointment_date: appointmentDate,
+          appointment_time: appointmentTime,
+          reason_for_visit: checkupType,
+          comment: reason || "",
+        };
+
+        const response = await axios.post(
+          `${API_URL}/api/appointments`,
+          appointmentData
+        );
+
+        if (response.status === 201 || response.status === 200) {
+          navigation.navigate("Confirmed", {
+            doctorName,
+            appointmentDate,
+            appointmentTime,
+            isRescheduling: false,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to book appointment:", error);
+      }
     }
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "pm" : "am";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
+  };
+
+  const formatDate = (date: string) => {
+    const [year, month, day] = date.split("-");
+    return `${day}-${month}-${year}`;
   };
 
   return (
@@ -79,10 +132,10 @@ export default function ConfirmAppointment() {
             />
             <View style={styles.doctorInfo}>
               <Text style={styles.doctorName}>
-                {doctor || "Dr. Budi Sound"}
+                {doctorName || "Dr. Budi Sound"}
               </Text>
               <View style={{ flexDirection: "row" }}>
-                <Text style={styles.specialty}>Aesthetic Doctor</Text>
+                <Text style={styles.specialty}>{specialty}</Text>
               </View>
             </View>
           </View>
@@ -91,13 +144,13 @@ export default function ConfirmAppointment() {
           {/* Date and Time */}
           <View style={styles.infoRow}>
             <Text style={styles.label}>📅 Date</Text>
-            <Text style={styles.value}>{String(newDate)}</Text>
+            <Text style={styles.value}>{formatDate(appointmentDate)}</Text>
           </View>
           <View style={styles.divider} />
           <View>
             <View style={styles.TimeRow}>
               <Text style={styles.label}>🕙 Time</Text>
-              <Text style={[styles.value]}>{newTime}</Text>
+              <Text style={[styles.value]}>{formatTime(appointmentTime)}</Text>
             </View>
             <View style={{ alignItems: "flex-end" }}></View>
           </View>
