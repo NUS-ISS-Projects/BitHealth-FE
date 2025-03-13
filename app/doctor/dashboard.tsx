@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Card, Avatar, Button, Divider } from "react-native-paper";
-import { useRouter } from "expo-router";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 const mockConfirmedAppointments = [
   {
@@ -44,12 +44,12 @@ const mockPendingRequests = [
 ];
 
 export default function DoctorDashboard() {
+  const navigation = useNavigation<NavigationProp<any>>();
   const [confirmedAppointments, setConfirmedAppointments] = useState(
     mockConfirmedAppointments
   );
   const [pendingRequests, setPendingRequests] = useState(mockPendingRequests);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const router = useRouter();
 
   const currentRequest = pendingRequests[currentIndex];
 
@@ -74,7 +74,10 @@ export default function DoctorDashboard() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.welcomeTxt}>Welcome Back!</Text>
@@ -165,9 +168,9 @@ export default function DoctorDashboard() {
                 mode='outlined'
                 textColor='#123D1F'
                 onPress={() =>
-                  router.push(
-                    `/doctor/prescription?appointmentId=${appointment.id}`
-                  )
+                  navigation.navigate("Prescription", {
+                    appointmentId: appointment.id,
+                  })
                 }
               >
                 View
@@ -184,7 +187,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
     padding: 20,
+    paddingBottom: 40,
   },
   header: {
     justifyContent: "space-between",
@@ -276,12 +282,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   time: {
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   date: {
     marginRight: 2,
-    fontSize: 14,
+    fontSize: 12,
     color: colors.textSecondary,
   },
   buttonRow: {

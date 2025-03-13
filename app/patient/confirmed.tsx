@@ -1,18 +1,56 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { Image } from "expo-image";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { useRoute } from "@react-navigation/native";
+
+type AppointmentParams = {
+  doctorName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  isRescheduling: boolean;
+};
 
 export default function AppointmentConfirmed() {
-  const {
-    doctor = "Dr. John Smith",
-    date,
-    location = "Komuk Express Semarang",
-    time = "09:00",
-  } = useLocalSearchParams();
-  const router = useRouter();
+  const route = useRoute();
+  const { doctorName, appointmentDate, appointmentTime, isRescheduling } =
+    route.params as AppointmentParams;
+  const navigation = useNavigation<NavigationProp<any>>();
+
+  const formatDate = (date: string) => {
+    const [year, month, day] = date.split("-");
+    return `${day}-${month}-${year}`;
+  };
+
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "pm" : "am";
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
+  };
+
+  const getMessage = () => {
+    if (isRescheduling) {
+      return {
+        header: "Appointment Rescheduled!",
+        subText: `Your appointment with ${doctorName} has been rescheduled to ${formatDate(
+          appointmentDate
+        )}, ${formatTime(appointmentTime)}.`,
+      };
+    }
+    return {
+      header: "Appointment Confirmed!",
+      subText: `Your appointment with ${doctorName} on ${formatDate(
+        appointmentDate
+      )}, ${formatTime(appointmentTime)} is confirmed.`,
+    };
+  };
+
+  const { header, subText } = getMessage();
 
   return (
     <View style={styles.container}>
@@ -24,22 +62,15 @@ export default function AppointmentConfirmed() {
       />
 
       {/* Confirmation Message */}
-      <Text style={styles.header}>Appointment Confirmed!</Text>
-      <Text style={styles.subText}>
-        Your appointment with {doctor} on{" "}
-        <Text style={styles.boldText}>
-          {new Date(Array.isArray(date) ? date[0] : date).toDateString()}
-        </Text>
-        , <Text style={styles.boldText}>{time}</Text> at{" "}
-        <Text style={styles.boldText}>{location}</Text> is confirmed.
-      </Text>
+      <Text style={styles.header}>{header}</Text>
+      <Text style={styles.subText}>{subText}</Text>
 
       {/* Proceed Button */}
       <Button
         mode='contained'
         style={styles.bookButton}
         labelStyle={styles.bookButtonText}
-        onPress={() => router.push("/patient")}
+        onPress={() => navigation.navigate("Home")}
       >
         Return to home page
       </Button>

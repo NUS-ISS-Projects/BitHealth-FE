@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { IconButton, Text, Button, Avatar, Card } from "react-native-paper";
-import { useRouter } from "expo-router";
+import {
+  useRoute,
+  useNavigation,
+  NavigationProp,
+} from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import colors from "../theme/colors";
 
@@ -10,65 +14,86 @@ const doctors = [
     id: 1,
     name: "Dr. Budi Sound",
     specialty: "Aesthetic Doctor",
-    rating: 5.0,
     reviews: 780,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 2,
     name: "Dr. Sober Roam",
     specialty: "Aesthetic Doctor",
-    rating: 4.9,
     reviews: 422,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 3,
     name: "Dr. Anastasia Satset",
     specialty: "Aesthetic Doctor",
-    rating: 4.9,
     reviews: 128,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 4,
     name: "Dr. Eni Teri",
     specialty: "Aesthetic Doctor",
-    rating: 4.8,
     reviews: 76,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 5,
     name: "Dr. Widi Striker",
     specialty: "Aesthetic Doctor",
-    rating: 4.7,
     reviews: 45,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 6,
     name: "Dr. Goh",
     specialty: "Aesthetic Doctor",
-    rating: 4.7,
     reviews: 45,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
   {
     id: 7,
     name: "Dr. Tan",
     specialty: "Aesthetic Doctor",
-    rating: 4.7,
     reviews: 45,
-    image: require("../../assets/images/favicon.png"),
+    image: null,
   },
 ];
+
+type BookScreenParams = {
+  reason: string;
+  checkupType: string;
+};
+
+const getAvatarSource = (doctor: (typeof doctors)[0]) => {
+  if (doctor.image) {
+    return doctor.image;
+  }
+  // Generate a random avatar using UI Avatars service
+  return { uri: `https://i.pravatar.cc/50?img=${doctor.id}` };
+};
 
 export default function SelectDoctor() {
   const [selectedDoctor, setSelectedDoctor] = useState<
     (typeof doctors)[0] | null
   >(null);
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
+  const route = useRoute();
+  const { reason, checkupType } = route.params as BookScreenParams;
+
+  const handleNext = () => {
+    if (selectedDoctor) {
+      navigation.navigate("AppointmentDate", {
+        doctorId: selectedDoctor.id,
+        doctorName: selectedDoctor.name,
+        specialty: selectedDoctor.specialty,
+        reason: reason,
+        checkupType: checkupType,
+        isRescheduling: false,
+      });
+    }
+  };
 
   return (
     <LinearGradient
@@ -82,7 +107,7 @@ export default function SelectDoctor() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Make appointment</Text>
       </View>
@@ -109,7 +134,7 @@ export default function SelectDoctor() {
             >
               <Card style={[styles.card, isSelected && styles.selectedCard]}>
                 <Card.Content style={styles.cardContent}>
-                  <Avatar.Image size={50} source={doctor.image} />
+                  <Avatar.Image size={50} source={getAvatarSource(doctor)} />
                   <View style={styles.doctorInfo}>
                     <Text
                       style={[
@@ -128,19 +153,6 @@ export default function SelectDoctor() {
                       >
                         {doctor.specialty}
                       </Text>
-                      <Text
-                        style={[styles.dot, isSelected && styles.selectedDot]}
-                      >
-                        ·
-                      </Text>
-                      <Text
-                        style={[
-                          styles.rating,
-                          isSelected && styles.selectedRating,
-                        ]}
-                      >
-                        ⭐ {doctor.rating} ({doctor.reviews})
-                      </Text>
                     </View>
                   </View>
                 </Card.Content>
@@ -156,11 +168,7 @@ export default function SelectDoctor() {
           mode='contained'
           style={styles.nextButton}
           labelStyle={styles.nextButtonText}
-          onPress={() =>
-            router.push(
-              `/patient/appointmentDate?doctor=${selectedDoctor?.name}`
-            )
-          }
+          onPress={handleNext}
           disabled={!selectedDoctor}
         >
           Next
@@ -253,21 +261,6 @@ const styles = StyleSheet.create({
     paddingRight: 5,
   },
   selectedSpecialty: {
-    color: colors.accent,
-  },
-  rating: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-  },
-  selectedRating: {
-    color: colors.accent,
-  },
-  dot: {
-    fontSize: 15,
-    color: "rgba(255, 255, 255, 0.8)",
-    paddingHorizontal: 5,
-  },
-  selectedDot: {
     color: colors.accent,
   },
   buttonContainer: {

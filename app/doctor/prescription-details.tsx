@@ -1,67 +1,212 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, TextInput, Button, Card } from "react-native-paper";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { ScrollView, StyleSheet, View } from "react-native";
+import {
+  Text,
+  TextInput,
+  Button,
+  Card,
+  IconButton,
+  Chip,
+} from "react-native-paper";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 
 export default function PrescriptionDetailsScreen() {
-  const { appointmentId } = useLocalSearchParams();
-  const router = useRouter();
+  const navigation = useNavigation<NavigationProp<any>>();
 
-  const [title, setTitle] = useState("");
-  const [details, setDetails] = useState("");
+  // Invoice fields remain single values
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+
+  // List of medicine items
+  const [medicines, setMedicines] = useState<
+    {
+      medicineName: string;
+      purpose: string;
+      dosage: string;
+      duration: string;
+      notes: string;
+    }[]
+  >([{ medicineName: "", purpose: "", dosage: "", duration: "", notes: "" }]);
+
+  // Status state and last updated timestamp
   const [status, setStatus] = useState("Pending");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const handleSave = () => {
-    setLastUpdated(new Date());
-    // Add your save logic here
+  // Update invoice fields
+  const handleInvoiceChange =
+    (field: "invoiceNo" | "invoiceDate") => (value: string) => {
+      if (field === "invoiceNo") setInvoiceNo(value);
+      else setInvoiceDate(value);
+    };
+
+  // Update a medicine item at a given index
+  const handleMedicineChange =
+    (
+      index: number,
+      field: "medicineName" | "purpose" | "dosage" | "duration" | "notes"
+    ) =>
+    (value: string) => {
+      const newMedicines = [...medicines];
+      newMedicines[index][field] = value;
+      setMedicines(newMedicines);
+    };
+
+  // Add a new blank medicine item to the list
+  const handleAddMedicine = () => {
+    setMedicines([
+      ...medicines,
+      { medicineName: "", purpose: "", dosage: "", duration: "", notes: "" },
+    ]);
   };
 
+  // Remove a medicine item from the list by index
+  const handleRemoveMedicine = (index: number) => {
+    // Ensure at least one medicine item remains
+    if (medicines.length > 1) {
+      const newMedicines = medicines.filter((_, idx) => idx !== index);
+      setMedicines(newMedicines);
+    }
+  };
+
+  // Approve action
   const handleApprove = () => {
     setStatus("Approved");
     setLastUpdated(new Date());
-    // Add your approval logic here
   };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Upload Prescription</Text>
+      {/* Header */}
+      <View style={styles.headerBarContainer}>
+        <IconButton
+          mode='contained'
+          icon='arrow-left'
+          iconColor='#123D1F'
+          containerColor='white'
+          size={18}
+          onPress={() => navigation.goBack()}
+        />
+        <Text style={styles.headerBar}>Enter Prescription Details</Text>
+      </View>
+
       <Card style={styles.card}>
         <Card.Content>
+          {/* Invoice Fields */}
           <TextInput
-            label='Document Title'
+            label='Invoice No.'
             mode='outlined'
-            value={title}
-            onChangeText={setTitle}
+            value={invoiceNo}
+            onChangeText={handleInvoiceChange("invoiceNo")}
             style={styles.input}
+            theme={{ colors: { primary: colors.primary } }}
           />
           <TextInput
-            label='Prescription Details'
+            label='Invoice Date'
             mode='outlined'
-            multiline
-            numberOfLines={4}
-            value={details}
-            onChangeText={setDetails}
+            value={invoiceDate}
+            onChangeText={handleInvoiceChange("invoiceDate")}
             style={styles.input}
+            theme={{ colors: { primary: colors.primary } }}
           />
 
+          {/* Render Medicine Items */}
+          {medicines.map((medicine, index) => (
+            <View key={index} style={styles.medicineItem}>
+              <View style={styles.medicineHeaderRow}>
+                <Text style={styles.medicineItemHeader}>
+                  Medicine #{index + 1}
+                </Text>
+                {medicines.length > 1 && (
+                  <IconButton
+                    icon='trash-can-outline'
+                    size={20}
+                    iconColor={colors.primary}
+                    onPress={() => handleRemoveMedicine(index)}
+                  />
+                )}
+              </View>
+              <TextInput
+                label='Medicine Name'
+                placeholder='e.g. Paracetamol'
+                mode='outlined'
+                value={medicine.medicineName}
+                onChangeText={handleMedicineChange(index, "medicineName")}
+                style={styles.input}
+                theme={{ colors: { primary: colors.primary } }}
+              />
+              <TextInput
+                label='Purpose'
+                placeholder='e.g. For fever'
+                mode='outlined'
+                value={medicine.purpose}
+                onChangeText={handleMedicineChange(index, "purpose")}
+                style={styles.input}
+                theme={{ colors: { primary: colors.primary } }}
+              />
+              <TextInput
+                label='Dosage'
+                placeholder='e.g. Twice Daily'
+                mode='outlined'
+                value={medicine.dosage}
+                onChangeText={handleMedicineChange(index, "dosage")}
+                style={styles.input}
+                theme={{ colors: { primary: colors.primary } }}
+              />
+              <TextInput
+                label='Duration'
+                placeholder='e.g. 7 days'
+                mode='outlined'
+                value={medicine.duration}
+                onChangeText={handleMedicineChange(index, "duration")}
+                style={styles.input}
+                theme={{ colors: { primary: colors.primary } }}
+              />
+              <TextInput
+                label='Notes'
+                placeholder='e.g. After meals'
+                mode='outlined'
+                value={medicine.notes}
+                onChangeText={handleMedicineChange(index, "notes")}
+                style={styles.input}
+                multiline
+                numberOfLines={3}
+                theme={{ colors: { primary: colors.primary } }}
+              />
+            </View>
+          ))}
+
+          <Button
+            mode='outlined'
+            style={styles.addButton}
+            labelStyle={styles.addButtonText}
+            onPress={handleAddMedicine}
+            icon='plus'
+          >
+            Add Medicine
+          </Button>
+
           <View style={styles.statusContainer}>
-            <Text>Status: {status}</Text>
+            <Chip
+              mode='flat'
+              style={[
+                styles.statusChip,
+                status === "Approved"
+                  ? styles.approvedChip
+                  : styles.pendingChip,
+              ]}
+              textStyle={styles.statusChipText}
+            >
+              {status}
+            </Chip>
             {lastUpdated && (
-              <Text>Last Updated: {lastUpdated.toLocaleString()}</Text>
+              <Text style={styles.lastUpdatedText}>
+                Last Updated: {lastUpdated.toLocaleString()}
+              </Text>
             )}
           </View>
 
           <View style={styles.buttonContainer}>
-            <Button
-              mode='contained'
-              style={styles.button}
-              labelStyle={styles.buttonText}
-              onPress={handleSave}
-            >
-              Save
-            </Button>
             <Button
               mode='contained'
               style={[styles.button, styles.approveButton]}
@@ -83,11 +228,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     padding: 20,
   },
-  header: {
-    fontSize: 22,
-    fontWeight: "bold",
+  headerBarContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 10,
+  },
+  headerBar: {
+    fontSize: 15,
+    fontWeight: "400",
     color: colors.primary,
-    marginBottom: 20,
+    paddingLeft: 35,
   },
   card: {
     padding: 15,
@@ -96,15 +246,64 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 15,
   },
+  medicineItem: {
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.textSecondary,
+    borderRadius: 8,
+    padding: 10,
+  },
+  medicineHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  medicineItemHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.primary,
+  },
+  addButton: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginBottom: 20,
+    borderColor: colors.primary,
+    borderWidth: 1,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.primary,
+  },
   statusContainer: {
-    marginVertical: 10,
+    marginVertical: 20,
+    alignItems: "flex-start",
+  },
+  statusChip: {
+    marginBottom: 8,
+  },
+  approvedChip: {
+    backgroundColor: colors.accent,
+  },
+  pendingChip: {
+    backgroundColor: "#DC3545",
+  },
+  statusChipText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  lastUpdatedText: {
+    color: colors.textSecondary,
+    fontSize: 12,
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
   },
   button: {
-    backgroundColor: colors.primary,
     borderRadius: 50,
     paddingVertical: 10,
     flex: 1,

@@ -2,6 +2,7 @@ import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Text, Card, Badge } from "react-native-paper";
 import colors from "../theme/colors";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
 
 const appointments = [
   {
@@ -41,11 +42,20 @@ const getStatusColor = (status: string) => {
 };
 
 export default function DoctorAppointmentsScreen() {
+  const navigation = useNavigation<NavigationProp<any>>();
+
+  const handleCardPress = (appointmentId: number) => {
+    navigation.navigate("Prescription", { appointmentId });
+  };
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>All Appointments</Text>
       {appointments.map((appointment) => (
-        <Card key={appointment.id} style={styles.card}>
+        <Card
+          key={appointment.id}
+          style={styles.card}
+          onPress={() => handleCardPress(appointment.id)}
+        >
           <Card.Content style={styles.cardContent}>
             <View style={styles.infoContainer}>
               <Text style={styles.patientName}>{appointment.patientName}</Text>
@@ -102,10 +112,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   badge: {
-    fontSize: 12,
+    fontSize: 8,
     color: "#FFFFFF",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 4,
+    height: 30,
+    width: 80,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

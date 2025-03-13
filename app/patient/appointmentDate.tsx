@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Button, Avatar, Card, IconButton } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   enGB,
   registerTranslation,
@@ -9,16 +8,59 @@ import {
   TimePickerModal,
 } from "react-native-paper-dates";
 import colors from "../theme/colors";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
+
+type AppointmentParams = {
+  doctorId: number;
+  doctorName: string;
+  specialty: string;
+  reason?: string;
+  checkupType?: string;
+  isRescheduling: boolean;
+  appointmentId: string;
+  currentDate?: string | Date | number[];
+  currentTime?: string | number[];
+};
 
 export default function AppointmentDate() {
   registerTranslation("en", enGB);
-  const { doctor = "Dr. Budi Sound", location = "Komuk Express Semarang" } =
-    useLocalSearchParams();
-  const router = useRouter();
-  const [date, setDate] = useState<Date | null>(null);
-  const [time, setTime] = useState<string | null>(null);
+  const route = useRoute();
+  const {
+    doctorId,
+    doctorName,
+    specialty,
+    reason,
+    checkupType,
+    isRescheduling,
+    appointmentId,
+    currentDate,
+    currentTime,
+  } = route.params as AppointmentParams;
+  const navigation = useNavigation<NavigationProp<any>>();
+  const [date, setDate] = useState<Date | null>(
+    isRescheduling && currentDate
+      ? new Date(Array.isArray(currentDate) ? currentDate[0] : currentDate)
+      : null
+  );
+  const [time, setTime] = useState<string | null>(
+    isRescheduling
+      ? typeof currentTime === "string"
+        ? currentTime
+        : Array.isArray(currentTime)
+        ? String(currentTime[0])
+        : null
+      : null
+  );
   const [openDatePicker, setOpenDatePicker] = useState(false);
   const [openTimePicker, setOpenTimePicker] = useState(false);
+
+  const headerText = isRescheduling
+    ? "Reschedule Appointment"
+    : "Select date and time";
 
   const handleDateConfirm = (params: any) => {
     setOpenDatePicker(false);
@@ -32,6 +74,38 @@ export default function AppointmentDate() {
     );
   };
 
+  const handleNext = () => {
+    // Format date to YYYY-MM-DD
+    const formattedDate = date
+      ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}-${String(date.getDate()).padStart(2, "0")}`
+      : null;
+
+    // Format time to HH:mm:ss
+    const formattedTime = time ? `${time}:00` : null;
+
+    if (isRescheduling) {
+      navigation.navigate("ConfirmAppointment", {
+        isRescheduling: true,
+        appointmentId,
+        newDate: formattedDate,
+        newTime: formattedTime,
+      });
+    } else {
+      navigation.navigate("ConfirmAppointment", {
+        doctorId,
+        doctorName,
+        specialty,
+        reason,
+        checkupType,
+        appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
+      });
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerBarContainer}>
@@ -41,20 +115,22 @@ export default function AppointmentDate() {
           iconColor='#123D1F'
           containerColor='white'
           size={18}
-          onPress={() => router.back()}
+          onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Select date and time</Text>
+        <Text style={styles.headerBar}>{headerText}</Text>
       </View>
       {/* Header */}
-      <View style={styles.headerContainer}>
-        <View>
-          <Text style={styles.header}>When</Text>
-          <Text style={styles.header}>are you free?</Text>
+      {!isRescheduling && (
+        <View style={styles.headerContainer}>
+          <View>
+            <Text style={styles.header}>When</Text>
+            <Text style={styles.header}>are you free?</Text>
+          </View>
+          <View style={styles.progressContainer}>
+            <Text style={styles.progressText}>3/4</Text>
+          </View>
         </View>
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>3/4</Text>
-        </View>
-      </View>
+      )}
 
       {/* Doctor Card */}
       <Card style={styles.card}>
@@ -66,23 +142,11 @@ export default function AppointmentDate() {
             />
             <View style={styles.doctorInfo}>
               <Text style={styles.doctorName}>
-                {doctor || "Dr. Budi Sound"}
+                {doctorName || "Dr. Budi Sound"}
               </Text>
               <View style={{ flexDirection: "row" }}>
-                <Text style={styles.specialty}>Aesthetic Doctor</Text>
-                <Text style={styles.dot}>·</Text>
-                <Text style={styles.rating}>⭐ 5.0 (780)</Text>
+                <Text style={styles.specialty}>{specialty}</Text>
               </View>
-            </View>
-          </View>
-          <View style={styles.divider} />
-          <View>
-            <View style={styles.locationRow}>
-              <Text style={styles.label}>📍 Location</Text>
-              <Text style={[styles.value]}>{location}</Text>
-            </View>
-            <View style={{ alignItems: "flex-end" }}>
-              <Text style={styles.directions}>Directions</Text>
             </View>
           </View>
         </Card.Content>
@@ -140,14 +204,10 @@ export default function AppointmentDate() {
         mode='contained'
         style={styles.nextButton}
         labelStyle={styles.nextButtonText}
-        onPress={() =>
-          router.push(
-            `/patient/confirmAppointment?doctor=${doctor}&date=${date?.toISOString()}`
-          )
-        }
-        disabled={!date}
+        onPress={handleNext}
+        disabled={!date || !time}
       >
-        Next
+        {isRescheduling ? "Confirm New Schedule" : "Next"}
       </Button>
     </ScrollView>
   );
@@ -168,7 +228,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 55,
+    paddingLeft: 40,
   },
   headerContainer: {
     flexDirection: "row",
@@ -216,25 +276,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
-  rating: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  dot: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    paddingHorizontal: 5,
-  },
   divider: {
     height: 1,
     backgroundColor: "#E5E5E5",
     marginVertical: 5,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
   },
   value: {
     fontSize: 12,
