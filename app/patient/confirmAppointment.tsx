@@ -43,12 +43,23 @@ export default function ConfirmAppointment() {
 
   const handleBooking = async () => {
     if (isRescheduling) {
-      navigation.navigate("Confirmed", {
-        appointmentId,
-        newDate: appointmentDate,
-        newTime: appointmentTime,
-        isRescheduling: true,
-      });
+      const rescheduleData = {
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime,
+      };
+      const response = await axios.put(
+        `${API_URL}/api/appointments/reschedule/${appointmentId}`,
+        rescheduleData
+      );
+
+      if (response.status === 200) {
+        navigation.navigate("Confirmed", {
+          doctorName,
+          appointmentDate,
+          appointmentTime,
+          isRescheduling: true,
+        });
+      }
     } else {
       try {
         const appointmentData = {

@@ -90,8 +90,10 @@ export default function AppointmentDate() {
       navigation.navigate("ConfirmAppointment", {
         isRescheduling: true,
         appointmentId,
-        newDate: formattedDate,
-        newTime: formattedTime,
+        doctorName,
+        specialty,
+        appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
       });
     } else {
       navigation.navigate("ConfirmAppointment", {
