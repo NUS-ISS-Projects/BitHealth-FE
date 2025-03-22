@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Image, ScrollView, StyleSheet } from "react-native";
 import { Text, Button, Card, Avatar } from "react-native-paper";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
+import axios from "axios";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const appointments = [
   {
@@ -19,16 +21,6 @@ const appointments = [
   },
 ];
 
-const upcomingAppointments = [
-  {
-    name: "Dr. Eugene Huang",
-    reason: "General Checkup",
-    date: "24 May",
-    time: "10:00 AM",
-    status: "Upcoming",
-  },
-];
-
 const getAvatarSource = (doctor: {
   name: string;
   id?: number;
@@ -38,12 +30,54 @@ const getAvatarSource = (doctor: {
     return doctor.image;
   }
   // Use name as seed if no ID is available
-  const seed = doctor.id || doctor.name.length;
+  const seed = doctor.id;
   return { uri: `https://i.pravatar.cc/50?img=${seed}` };
+};
+
+const formatDate = (date: string) => {
+  const [year, month, day] = date.split("-");
+  return `${day}-${month}-${year}`;
+};
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "pm" : "am";
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
 };
 
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  console.log("recentAppointments", recentAppointments);
+
+  useEffect(() => {
+    async function fetchAppointments() {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/appointments/patient/1`
+        );
+        const data = response.data;
+        const upcoming = data.filter(
+          (apt: any) => apt.status === "PENDING" || apt.status === "CONFIRMED"
+        );
+        const recent = data.filter(
+          (apt: any) => apt.status !== "PENDING" && apt.status !== "CONFIRMED"
+        );
+        setUpcomingAppointments(upcoming);
+        setRecentAppointments(recent);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAppointments();
+  }, []);
+
   const hasUpcoming = upcomingAppointments.length > 0;
   return (
     <ScrollView style={styles.container}>
@@ -87,18 +121,19 @@ export default function PatientHome() {
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
                       <Text variant='titleSmall' style={styles.doctorName}>
-                        {appointment.name}
+                        {appointment.doctor.user.name}
                       </Text>
                     </View>
                     <Text variant='bodySmall' style={styles.appointmentReason}>
-                      {appointment.reason}
+                      {appointment.reasonForVisit}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
                         variant='labelMedium'
                         style={styles.appointmentDate}
                       >
-                        {appointment.date}, {appointment.time}
+                        {appointment.appointmentDate},{" "}
+                        {appointment.appointmentTime}
                       </Text>
                     </View>
                   </View>

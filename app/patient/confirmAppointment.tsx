@@ -12,7 +12,6 @@ import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { useRoute } from "@react-navigation/native";
 import axios from "axios";
-// import { API_URL } from "@env";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 type AppointmentParams = {
