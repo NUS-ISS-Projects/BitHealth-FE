@@ -6,21 +6,6 @@ import colors from "../theme/colors";
 import axios from "axios";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const appointments = [
-  {
-    name: "Dr. Budi Sound",
-    reason: "Annual Checkup",
-    date: "21 May",
-    time: "10:00 AM",
-  },
-  {
-    name: "Dr. Anastasia",
-    reason: "Annual Checkup",
-    date: "17 May",
-    time: "10:00 AM",
-  },
-];
-
 const getAvatarSource = (doctor: {
   name: string;
   id?: number;
@@ -36,7 +21,21 @@ const getAvatarSource = (doctor: {
 
 const formatDate = (date: string) => {
   const [year, month, day] = date.split("-");
-  return `${day}-${month}-${year}`;
+  const map = {
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
+  };
+  return `${day} ${map[month as keyof typeof map]} ${year}`;
 };
 
 const formatTime = (time: string) => {
@@ -51,8 +50,6 @@ export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  console.log("recentAppointments", recentAppointments);
 
   useEffect(() => {
     async function fetchAppointments() {
@@ -71,8 +68,6 @@ export default function PatientHome() {
         setRecentAppointments(recent);
       } catch (error) {
         console.error("Error fetching appointments:", error);
-      } finally {
-        setLoading(false);
       }
     }
     fetchAppointments();
@@ -132,8 +127,8 @@ export default function PatientHome() {
                         variant='labelMedium'
                         style={styles.appointmentDate}
                       >
-                        {appointment.appointmentDate},{" "}
-                        {appointment.appointmentTime}
+                        {formatDate(appointment.appointmentDate)},{" "}
+                        {formatTime(appointment.appointmentTime)}
                       </Text>
                     </View>
                   </View>
@@ -183,7 +178,7 @@ export default function PatientHome() {
           </Text>
         </View>
 
-        {appointments.map((appointment, index) => (
+        {recentAppointments.map((appointment, index) => (
           <Card
             key={index}
             style={styles.appointmentCard}
@@ -194,15 +189,18 @@ export default function PatientHome() {
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
                   <Text variant='titleSmall' style={styles.doctorName}>
-                    {appointment.name}
+                    {appointment.doctor.user.name}
                   </Text>
                 </View>
                 <Text variant='bodySmall' style={styles.appointmentReason}>
-                  {appointment.reason}
+                  {appointment.reasonForVisit}
                 </Text>
-                <Text variant='labelMedium' style={styles.appointmentDate}>
-                  {appointment.date}, {appointment.time}
-                </Text>
+                <View style={styles.timeContainer}>
+                  <Text variant='labelMedium' style={styles.appointmentDate}>
+                    {formatDate(appointment.appointmentDate)},{" "}
+                    {formatTime(appointment.appointmentTime)}
+                  </Text>
+                </View>
               </View>
             </Card.Content>
           </Card>

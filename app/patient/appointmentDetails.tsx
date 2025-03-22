@@ -15,7 +15,6 @@ import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { Alert } from "react-native";
-// import { API_URL } from "@env";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface DetailRowProps {
@@ -40,7 +39,6 @@ const formatDate = (date: string) => {
 export default function AppointmentDetails() {
   const router = useRouter();
   const navigation = useNavigation<NavigationProp<any>>();
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleReschedule = () => {
     navigation.navigate("AppointmentDate", {
@@ -66,7 +64,6 @@ export default function AppointmentDetails() {
           text: "Yes",
           style: "destructive",
           onPress: async () => {
-            setIsLoading(true);
             try {
               const response = await axios.put(
                 `${API_URL}/api/appointments/updateStatus/4`,
@@ -82,8 +79,6 @@ export default function AppointmentDetails() {
                 "Error",
                 "Failed to cancel appointment. Please try again."
               );
-            } finally {
-              setIsLoading(false);
             }
           },
         },

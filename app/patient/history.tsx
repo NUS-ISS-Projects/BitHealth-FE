@@ -1,37 +1,80 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { Text, Card, Badge } from "react-native-paper";
 import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import axios from "axios";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const consultationHistory = [
-  {
-    id: 1,
-    doctorName: "Dr. Sarah Wilson",
-    specialty: "General Practitioner",
-    date: "2024-02-28",
-    time: "10:00 AM",
-    status: "Completed",
-    diagnosis: "Common Cold",
-    prescription: "Available",
-    mc: "Available",
-  },
-  {
-    id: 2,
-    doctorName: "Dr. James Lee",
-    specialty: "Dermatologist",
-    date: "2024-02-15",
-    time: "2:30 PM",
-    status: "Completed",
-    diagnosis: "Skin Rash",
-    prescription: "Available",
-    mc: "Not Issued",
-  },
-];
+const formatDate = (date: string) => {
+  const [year, month, day] = date.split("-");
+  const map = {
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
+  };
+  return `${day} ${map[month as keyof typeof map]} ${year}`;
+};
+
+const getBadgeStyle = (status: string) => {
+  // Customize these colors based on your theme or preferences.
+  switch (status.toLowerCase()) {
+    case "completed":
+      return { backgroundColor: "green" };
+    case "cancelled":
+      return { backgroundColor: "red" };
+    case "pending":
+      return { backgroundColor: "grey" };
+    default:
+      return { backgroundColor: "orange" };
+  }
+};
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "pm" : "am";
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
+};
 
 export default function History() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const [consultationHistory, setConsultationHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchConsultationHistory() {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/appointments/patient/1`
+        );
+        const data = response.data.map((appointment: any) => ({
+          id: appointment.appointmentId,
+          doctorName: appointment.doctor?.user?.name || "Unknown Doctor",
+          specialty: appointment.doctor?.specialization || "",
+          status: appointment.status || "Unknown",
+          date: formatDate(appointment.appointmentDate),
+          time: formatTime(appointment.appointmentTime),
+          reason: appointment.reasonForVisit || "No diagnosis provided",
+        }));
+        setConsultationHistory(data);
+      } catch (error) {
+        console.error("Error fetching consultation history:", error);
+      }
+    }
+    fetchConsultationHistory();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -45,7 +88,15 @@ export default function History() {
           <Card
             key={consultation.id}
             style={styles.card}
-            onPress={() => navigation.navigate("ConsultationDetails")}
+            onPress={() =>
+              navigation.navigate("ConsultationDetails", {
+                appointmentId: consultation.id,
+                doctorName: consultation.doctorName,
+                specialty: consultation.specialty,
+                appointmentDate: consultation.date,
+                appointmentTime: consultation.time,
+              })
+            }
           >
             <Card.Content>
               <View style={styles.cardHeader}>
@@ -55,11 +106,18 @@ export default function History() {
                   </Text>
                   <Text style={styles.specialty}>{consultation.specialty}</Text>
                 </View>
-                <FontAwesome
-                  name='chevron-right'
-                  size={16}
-                  color={colors.primary}
-                />
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Badge
+                    style={[styles.badge, getBadgeStyle(consultation.status)]}
+                  >
+                    {consultation.status}
+                  </Badge>
+                  <FontAwesome
+                    name='chevron-right'
+                    size={16}
+                    color={colors.primary}
+                  />
+                </View>
               </View>
 
               <View style={styles.dateContainer}>
@@ -74,8 +132,8 @@ export default function History() {
               </View>
 
               <View style={styles.detailsContainer}>
-                <Text style={styles.label}>Diagnosis:</Text>
-                <Text style={styles.value}>{consultation.diagnosis}</Text>
+                <Text style={styles.label}>Reason for visit:</Text>
+                <Text style={styles.value}>{consultation.reason}</Text>
               </View>
             </Card.Content>
           </Card>
@@ -124,8 +182,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 20,
+    width: 100,
+    marginHorizontal: 10,
+    color: "white",
   },
   dateContainer: {
     flexDirection: "row",
