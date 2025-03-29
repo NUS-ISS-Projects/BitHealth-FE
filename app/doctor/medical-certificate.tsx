@@ -12,10 +12,9 @@ import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 
 const formFields = [
-  { label: "Date of Visit", field: "dateOfVisit" },
   { label: "MC No.", field: "mcNo" },
-  { label: "Name", field: "name" },
   { label: "No. of Days", field: "noOfDays" },
+  { label: "Issue Date", field: "issueDate" },
   { label: "With Effect From", field: "effectiveFrom" },
 ];
 
@@ -23,10 +22,9 @@ export default function MedicalCertificateScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
 
   const [formData, setFormData] = useState({
-    dateOfVisit: "",
     mcNo: "",
-    name: "",
     noOfDays: "",
+    issueDate: "",
     effectiveFrom: "",
   });
   const [status, setStatus] = useState("Pending");
@@ -56,6 +54,12 @@ export default function MedicalCertificateScreen() {
       </View>
       <View style={styles.contentContainer}>
         <Card style={styles.card}>
+          <Card.Title
+            title='Patient name: Jong Yann'
+            subtitle='Date of visit: 18-03-2025'
+            titleStyle={{ color: "black", fontWeight: "bold" }}
+            subtitleStyle={{ color: "black", fontWeight: "bold" }}
+          />
           <Card.Content>
             {formFields.map((field) => (
               <TextInput

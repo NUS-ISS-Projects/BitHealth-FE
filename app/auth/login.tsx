@@ -140,6 +140,8 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
   },
   orText: {
     textAlign: "center",
