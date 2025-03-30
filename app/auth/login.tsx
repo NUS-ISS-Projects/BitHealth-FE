@@ -3,7 +3,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
-import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import { auth } from "../firebase"; // Adjust the path if necessary
 import colors from "../theme/colors";
@@ -13,7 +20,6 @@ const ROUTES = {
   doctor: "/doctor/dashboard",
   patient: "/patient",
 };
-
 
 // Store data securely
 const storeData = async (key: string, value: string) => {
@@ -37,7 +43,11 @@ const getData = async (key: string) => {
   }
 };
 
-
+const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
+const ROUTES = {
+  doctor: "/doctor/dashboard",
+  patient: "/patient",
+};
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,29 +55,31 @@ const LoginScreen = () => {
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-  
   // Handle Email/Password Login
   const handleLogin = async () => {
     setLoading(true);
     try {
-
-
-
       // Perform Firebase authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       const idToken = await user.getIdToken();
       console.log("Logged in user:", user);
 
-       // Store the token securely
-       storeData("authToken", idToken);
-     
+      // Store the token securely
+      storeData("authToken", idToken);
 
       // Redirect based on user type and pass userData
       redirectToRoute(userType);
     } catch (error) {
-      Alert.alert("Error", error.message || "Invalid username/email or password.");
+      Alert.alert(
+        "Error",
+        error.message || "Invalid username/email or password."
+      );
       console.error("Login Error:", error);
     } finally {
       setLoading(false);
@@ -76,41 +88,40 @@ const LoginScreen = () => {
 
   // Redirect to the appropriate route based on user type
   const redirectToRoute = (userType: string | number | string[]) => {
-
     router.push({
       pathname: ROUTES[userType],
-       // Pass userData as a stringified JSON object
+      // Pass userData as a stringified JSON object
     });
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
-        <Text variant="headlineMedium" style={styles.welcomeText}>
+        <Text variant='headlineMedium' style={styles.welcomeText}>
           Welcome Back!
         </Text>
       </View>
 
       {/* Login Form */}
       <TextInput
-        label="Username or Email"
-        mode="outlined"
+        label='Username or Email'
+        mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
       />
       <TextInput
-        label="Password"
-        mode="outlined"
+        label='Password'
+        mode='outlined'
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon="eye" />}
+        right={<TextInput.Icon icon='eye' />}
       />
 
       <Button
-        mode="contained"
+        mode='contained'
         style={styles.loginButton}
         labelStyle={styles.loginButtonText}
         onPress={handleLogin}
@@ -123,7 +134,7 @@ const LoginScreen = () => {
       <Text style={styles.orText}>Or, login with</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name="google" size={24} color="#DB4437" />
+          <FontAwesome name='google' size={24} color='#DB4437' />
         </TouchableOpacity>
       </View>
 
@@ -153,7 +164,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#FFFFFF",
     padding: 20,
-    justifyContent: "center",
+    justifyContent: "center", // Center content vertically
   },
   headerContainer: {
     alignItems: "center",

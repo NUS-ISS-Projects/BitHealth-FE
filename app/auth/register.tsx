@@ -10,7 +10,13 @@ import {
   signInWithCredential,
 } from "firebase/auth";
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
 WebBrowser.maybeCompleteAuthSession();
@@ -31,10 +37,11 @@ const RegisterScreen = () => {
   const auth = getAuth();
 
   // Configure Google Auth
-  const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_WEBCLIENT, // Replace with your Google Client ID
-    responseType: "token",
-  });
+  const [googleRequest, googleResponse, googlePromptAsync] =
+    Google.useAuthRequest({
+      webClientId: process.env.EXPO_PUBLIC_WEBCLIENT, // Replace with your Google Client ID
+      responseType: "token",
+    });
 
   // Handle Email/Password Registration
   const handleRegister = async () => {
@@ -46,11 +53,15 @@ const RegisterScreen = () => {
       }
 
       // Create user in Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
-       //Register user in supabase
-       const userData = {
+      //Register user in supabase
+      const userData = {
         name: username || "No Name", // Use display name or fallback
         email: email,
         password: "GooglePass", // Use the Google ID token as the password (optional)
@@ -59,26 +70,33 @@ const RegisterScreen = () => {
 
       console.log("Sending payload:", userData);
 
-      const response = await axios.post(`${API_URL}/api/users/register`, userData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `${API_URL}/api/users/register`,
+        userData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       console.log("Response data:", response.data);
 
       if (!response.data || Object.keys(response.data).length === 0) {
         throw new Error("Registration has failed.");
-    }
+      }
 
-    const responseData = response.data;
-   
+      const responseData = response.data;
+
       // Redirect based on user type
       router.push({
         pathname: ROUTES[userType],
         params: { userData: JSON.stringify(responseData) }, // Pass userData as a stringified JSON object
       });
     } catch (error) {
-      Alert.alert("Error", error.message || "Failed to register. Please try again.");
+      Alert.alert(
+        "Error",
+        error.message || "Failed to register. Please try again."
+      );
       console.error("Registration Error:", error.message);
     } finally {
       setLoading(false);
@@ -94,7 +112,7 @@ const RegisterScreen = () => {
 
         // Create a Google credential
         const credential = GoogleAuthProvider.credential(id_token);
-          
+
         // Sign in with Firebase
         const userCredential = await signInWithCredential(auth, credential);
         const user = userCredential.user;
@@ -102,12 +120,12 @@ const RegisterScreen = () => {
         console.log("User signed in with Google:", user);
 
         //Register user in supabase
-       const userData = {
-        name: username || "No Name", // Use display name or fallback
-        email: email,
-        password: "GooglePass", // Use the Google ID token as the password (optional)
-        role: userType, // Pass the user type (doctor/patient)
-      };
+        const userData = {
+          name: username || "No Name", // Use display name or fallback
+          email: email,
+          password: "GooglePass", // Use the Google ID token as the password (optional)
+          role: userType, // Pass the user type (doctor/patient)
+        };
 
         // Redirect based on user type
         router.push({
@@ -124,41 +142,41 @@ const RegisterScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text variant="headlineMedium" style={styles.welcomeText}>
+        <Text variant='headlineMedium' style={styles.welcomeText}>
           Create a {userType === "doctor" ? "Doctor" : "Patient"} account
         </Text>
       </View>
 
       {/* Registration Form */}
       <TextInput
-        label="Username"
-        mode="outlined"
+        label='Username'
+        mode='outlined'
         value={username}
         onChangeText={setUsername}
         style={styles.input}
-        autoCapitalize="none"
+        autoCapitalize='none'
       />
       <TextInput
-        label="Email ID"
-        mode="outlined"
+        label='Email ID'
+        mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        keyboardType='email-address'
+        autoCapitalize='none'
       />
       <TextInput
-        label="Password"
-        mode="outlined"
+        label='Password'
+        mode='outlined'
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon="eye" />}
+        right={<TextInput.Icon icon='eye' />}
       />
 
       <Button
-        mode="contained"
+        mode='contained'
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
         onPress={handleRegister}
@@ -191,10 +209,13 @@ const RegisterScreen = () => {
       </View>
 
       <View style={styles.socialButtonsContainer}>
-        <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignIn}>
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={handleGoogleSignIn}
+        >
           <View style={styles.socialContentContainer}>
             <View style={styles.socialIconContainer}>
-              <FontAwesome name="google" size={20} color="#DB4437" />
+              <FontAwesome name='google' size={20} color='#DB4437' />
             </View>
             <Text style={styles.socialButtonText}>Continue with Google</Text>
           </View>
