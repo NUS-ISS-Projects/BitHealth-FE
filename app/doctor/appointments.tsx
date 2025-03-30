@@ -1,32 +1,9 @@
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Text, Card, Badge } from "react-native-paper";
+import { Badge, Card, Text } from "react-native-paper";
 import colors from "../theme/colors";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
 
-const appointments = [
-  {
-    id: 1,
-    patientName: "Alice Johnson",
-    date: "2024-07-01",
-    time: "10:00 AM",
-    status: "Completed",
-  },
-  {
-    id: 2,
-    patientName: "Bob Smith",
-    date: "2024-07-02",
-    time: "11:00 AM",
-    status: "Expired",
-  },
-  {
-    id: 3,
-    patientName: "Charlie Brown",
-    date: "2024-07-03",
-    time: "02:00 PM",
-    status: "Rejected",
-  },
-];
 
 const getStatusColor = (status: string) => {
   switch (status) {

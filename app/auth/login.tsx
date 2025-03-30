@@ -1,79 +1,98 @@
-import React, { useState } from "react";
-import { View, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from "react";
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
+import { auth } from "../firebase"; // Adjust the path if necessary
+import colors from "../theme/colors";
 
+const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
+const ROUTES = {
+  doctor: "/doctor/dashboard",
+  patient: "/patient",
+};
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-  // Handle Login
-  const handleLogin = () => {
-    router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+
+
+  // Handle Email/Password Login
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      let emailToUse = email;
+
+      // Check if the input is a username (not an email)
+      if (!email.includes("@")) {
+        emailToUse = await getUsernameEmail(email); // Fetch email from Firestore
+      }
+
+      // Perform Firebase authentication
+      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
+      const user = userCredential.user;
+      console.log("Logged in user:", user);
+
+      // Redirect based on user type
+      router.push({
+        pathname: ROUTES[userType] , // Fallback to a default route
+        params: { userData: JSON.stringify(user) }, // Pass user data as query parameters
+      });
+    } catch (error) {
+      Alert.alert("Error", "Invalid username/email or password.");
+      console.error("Login Error:", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container} // Apply layout styles here
+    >
       <View style={styles.headerContainer}>
-        <Image
-          source={
-            userType === "doctor"
-              ? require("../../assets/images/doctor-login.jpg") // Image for doctor
-              : require("../../assets/images/patient-login.jpg") // Image for patient
-          }
-          style={styles.headerImage}
-          resizeMode='contain'
-        />
-        <Text variant='headlineMedium' style={styles.welcomeText}>
+        <Text variant="headlineMedium" style={styles.welcomeText}>
           Welcome Back!
-        </Text>
-        <Text variant='titleMedium' style={styles.subtitleText}>
-          Login as {userType === "doctor" ? "Doctor" : "Patient"}
         </Text>
       </View>
 
       {/* Login Form */}
       <TextInput
-        label='Email ID'
-        mode='outlined'
+        label="Username or Email"
+        mode="outlined"
         value={email}
         onChangeText={setEmail}
         style={styles.input}
       />
       <TextInput
-        label='Password'
-        mode='outlined'
+        label="Password"
+        mode="outlined"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={<TextInput.Icon icon="eye" />}
       />
-      <TouchableOpacity>
-        <Text style={styles.forgotText}>Forgot?</Text>
-      </TouchableOpacity>
 
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.loginButton}
         labelStyle={styles.loginButtonText}
         onPress={handleLogin}
+        disabled={loading}
       >
-        Login
+        {loading ? "Logging in..." : "Login"}
       </Button>
 
       {/* Social Login */}
       <Text style={styles.orText}>Or, login with</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name='facebook' size={24} color='#4267B2' />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name='google' size={24} color='#DB4437' />
+          <FontAwesome name="google" size={24} color="#DB4437" />
         </TouchableOpacity>
       </View>
 
@@ -92,7 +111,7 @@ const LoginScreen = () => {
           Register
         </Text>
       </Text>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -100,36 +119,22 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1, // Ensure the content expands to fill the available space
     backgroundColor: "#FFFFFF",
     padding: 20,
-    justifyContent: "center",
+    justifyContent: "center", // Center content vertically
   },
   headerContainer: {
     alignItems: "center",
     marginTop: 60,
-  },
-  headerImage: {
-    width: "100%",
-    height: 200,
-    marginBottom: 20,
   },
   welcomeText: {
     color: colors.primary,
     fontWeight: "bold",
     marginBottom: 10,
   },
-  subtitleText: {
-    color: colors.textSecondary,
-    marginBottom: 15,
-  },
   input: {
     marginBottom: 15,
-  },
-  forgotText: {
-    textAlign: "right",
-    color: colors.primary,
-    marginBottom: 20,
   },
   loginButton: {
     backgroundColor: colors.primary,
