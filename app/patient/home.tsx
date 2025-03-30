@@ -50,6 +50,7 @@ export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     async function fetchAppointments() {
@@ -58,6 +59,7 @@ export default function PatientHome() {
           `${API_URL}/api/appointments/patient/1`
         );
         const data = response.data;
+        setUserName(data[0].patient.user.name);
         const upcoming = data.filter(
           (apt: any) => apt.status === "PENDING" || apt.status === "CONFIRMED"
         );
@@ -92,7 +94,7 @@ export default function PatientHome() {
             Hello,
           </Text>
           <Text variant='titleLarge' style={styles.userName}>
-            Jong Yann! 👋
+            {userName} 👋
           </Text>
         </View>
         {hasUpcoming ? (

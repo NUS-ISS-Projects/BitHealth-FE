@@ -1,18 +1,56 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Text } from "react-native-paper";
 import colors from "../theme/colors";
+import axios from "axios";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export default function DiagnosisSection() {
+interface DiagnosisSectionProps {
+  appointmentId: number;
+}
+
+export default function DiagnosisSection({
+  appointmentId,
+}: DiagnosisSectionProps) {
+  const [diagnosis, setDiagnosis] = useState("");
+  const [diagnosisAction, setdiagnosisAction] = useState("");
+
+  useEffect(() => {
+    const loadPatientData = async () => {
+      try {
+        const patientData = await fetchPatientSettings(appointmentId);
+        setDiagnosis(patientData.diagnosis || "");
+        setdiagnosisAction(patientData.diagnosisAction || "");
+      } catch (error) {
+        console.error("Failed to load patient data:", error);
+      }
+    };
+    loadPatientData();
+  }, []);
+
+  async function fetchPatientSettings(appointmentId: number) {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/appointments/diagnosis/${appointmentId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Failed to load patient data:", error);
+      throw error;
+    }
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionHeading}>Diagnosis</Text>
       <Text style={styles.sectionTitle}>Your Diagnosis</Text>
       <Text style={styles.bodyText}>
-        J06.9 – Acute upper respiratory infection, unspecified
+        {diagnosis ? diagnosis : "No diagnosis available."}
       </Text>
       <Text style={styles.sectionTitle}>What You Should Do</Text>
-      <Text style={styles.bodyText}>Take a good rest and get well soon!</Text>
+      <Text style={styles.bodyText}>
+        {diagnosisAction ? diagnosisAction : "You are good to go"}
+      </Text>
     </View>
   );
 }

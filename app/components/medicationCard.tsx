@@ -1,36 +1,72 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { Text, Chip } from "react-native-paper";
 import colors from "../theme/colors";
+import axios from "axios";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-export default function MedicationSection() {
+interface MedicationSectionProps {
+  appointmentId: number;
+}
+
+export default function MedicationSection({
+  appointmentId,
+}: MedicationSectionProps) {
+  const [medicationData, setMedicationData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    async function fetchMedication(appointmentId: number) {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/prescriptions/appointment/${appointmentId}`
+        );
+        setMedicationData(response.data);
+      } catch (error) {
+        console.error("Error fetching medication data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchMedication(appointmentId);
+  }, [appointmentId]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size='large' color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!medicationData) {
+    return <Text>Error loading medication data.</Text>;
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.sectionHeading}>Medication</Text>
-      <View style={styles.medicationItem}>
-        <Text style={styles.medicationText}>Paracetamol</Text>
-        <Text style={styles.medicationInstruction}>Instructions</Text>
-        <Text style={styles.medicationInstructionText}>
-          For headache, Take 1 tablet(s) Twice Daily for 3 days
-        </Text>
-      </View>
-      <View style={styles.medicationItem}>
-        <Text style={styles.medicationText}>Lozenges</Text>
-        <Text style={styles.medicationInstruction}>Instructions</Text>
-        <Text style={styles.medicationInstructionText}>
-          For sore Throat, Take 1 tablet(s) Twice Daily for 3 days
-        </Text>
-      </View>
+      {medicationData.medicineList.map((medicine: any, index: number) => (
+        <View key={index} style={styles.medicationItem}>
+          <Text style={styles.medicationText}>{medicine.medicineName}</Text>
+          <Text style={styles.medicationInstruction}>Instructions</Text>
+          <Text style={styles.medicationInstructionText}>
+            For {medicine.purpose}, Take {medicine.dosage} for{" "}
+            {medicine.duration}. {medicine.notes}
+          </Text>
+        </View>
+      ))}
       <View style={styles.verifyContainer}>
         <Text style={styles.verifyText}>
           This mediciation is verified by BitHealth.
         </Text>
         <Chip
           mode='flat'
-          style={[styles.approvedChip]}
+          style={
+            medicationData.isVerified ? styles.approvedChip : styles.pendingChip
+          }
           textStyle={styles.statusChipText}
         >
-          Approved
+          {medicationData.isVerified ? "Approved" : "Not Approved"}
         </Chip>
       </View>
     </View>
@@ -88,5 +124,14 @@ const styles = StyleSheet.create({
   approvedChip: {
     backgroundColor: colors.accent,
     marginTop: 8,
+  },
+  pendingChip: {
+    backgroundColor: "#DC3545",
+    marginTop: 8,
+  },
+  loadingContainer: {
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

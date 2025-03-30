@@ -13,7 +13,6 @@ import {
 } from "react-native-paper";
 import colors from "../theme/colors";
 import axios from "axios";
-// import { API_URL } from "@env";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 

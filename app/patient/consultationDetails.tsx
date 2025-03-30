@@ -55,13 +55,29 @@ export default function ConsultationDetails() {
   const renderContent = () => {
     switch (selectedTab) {
       case TabKey.DIAGNOSIS:
-        return <DiagnosisSection />;
+        return (
+          <DiagnosisSection
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.MEDICATION:
-        return <MedicationSection />;
+        return (
+          <MedicationSection
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.MEDICAL_CERT:
-        return <MedicalCertificate />;
+        return (
+          <MedicalCertificate
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.RECEIPT:
-        return <Receipt />;
+        return (
+          <Receipt
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       default:
         return null;
     }
@@ -214,6 +230,8 @@ const styles = StyleSheet.create({
   },
   activeTabLabel: {
     fontSize: 12,
+    color: "#000000",
+    fontWeight: "bold",
   },
   inactiveTabLabel: {
     color: colors.textPrimary,
