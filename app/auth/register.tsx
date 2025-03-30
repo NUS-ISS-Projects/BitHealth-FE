@@ -1,55 +1,154 @@
-import React, { useState } from "react";
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
+import * as Google from "expo-auth-session/providers/google";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential,
+} from "firebase/auth";
+import React, { useState } from "react";
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
+WebBrowser.maybeCompleteAuthSession();
 
+const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-  const handleRegister = () => {
-    router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+  const auth = getAuth();
+
+  // Configure Google Auth
+  const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_WEBCLIENT, // Replace with your Google Client ID
+    responseType: "token",
+  });
+
+  // Handle Email/Password Registration
+  const handleRegister = async () => {
+    setLoading(true);
+    try {
+      // Validate inputs
+      if (!email || !password || !username) {
+        throw new Error("Please fill in all fields.");
+      }
+
+      // Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+       //Register user in supabase
+       const userData = {
+        name: username || "No Name", // Use display name or fallback
+        email: email,
+        password: "GooglePass", // Use the Google ID token as the password (optional)
+        role: userType, // Pass the user type (doctor/patient)
+      };
+
+      const response = await fetch("http://localhost:8080/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to register user in Supabase: ${response.statusText}`);
+      }
+
+      const responseData = await response.json();
+      console.log("User registered in Supabase:", responseData);
+      
+
+      console.log("User registered:", user);
+
+      // Redirect based on user type
+      router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+    } catch (error) {
+      Alert.alert("Error", error.message || "Failed to register. Please try again.");
+      console.error("Registration Error:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Google Sign-In
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await googlePromptAsync();
+      if (result.type === "success") {
+        const { id_token } = result.params;
+
+        // Create a Google credential
+        const credential = GoogleAuthProvider.credential(id_token);
+          
+        // Sign in with Firebase
+        const userCredential = await signInWithCredential(auth, credential);
+        const user = userCredential.user;
+
+        console.log("User signed in with Google:", user);
+
+        // Redirect based on user type
+        router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+      }
+    } catch (error) {
+      Alert.alert("Error", error.message || "Failed to sign in with Google.");
+      console.error("Google Sign-In Error:", error.message);
+    }
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text variant='headlineMedium' style={styles.welcomeText}>
+        <Text variant="headlineMedium" style={styles.welcomeText}>
           Create a {userType === "doctor" ? "Doctor" : "Patient"} account
         </Text>
       </View>
 
       {/* Registration Form */}
       <TextInput
-        label='Email ID'
-        mode='outlined'
+        label="Username"
+        mode="outlined"
+        value={username}
+        onChangeText={setUsername}
+        style={styles.input}
+        autoCapitalize="none"
+      />
+      <TextInput
+        label="Email ID"
+        mode="outlined"
         value={email}
         onChangeText={setEmail}
         style={styles.input}
-        keyboardType='email-address'
-        autoCapitalize='none'
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
       <TextInput
-        label='Password'
-        mode='outlined'
+        label="Password"
+        mode="outlined"
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={<TextInput.Icon icon="eye" />}
       />
 
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
         onPress={handleRegister}
+        disabled={loading}
       >
-        Register
+        {loading ? "Registering..." : "Register"}
       </Button>
 
       {/* Login Link */}
@@ -67,28 +166,21 @@ const RegisterScreen = () => {
           Login
         </Text>
       </Text>
+
       {/* Separator */}
       <View style={styles.separatorContainer}>
         <View style={styles.separator} />
         <Text style={styles.separatorText}>or continue with</Text>
         <View style={styles.separator} />
       </View>
+
       <View style={styles.socialButtonsContainer}>
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity style={styles.socialButton} onPress={handleGoogleSignIn}>
           <View style={styles.socialContentContainer}>
             <View style={styles.socialIconContainer}>
-              <FontAwesome name='google' size={20} color='#DB4437' />
+              <FontAwesome name="google" size={20} color="#DB4437" />
             </View>
             <Text style={styles.socialButtonText}>Continue with Google</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton}>
-          <View style={styles.socialContentContainer}>
-            <View style={styles.socialIconContainer}>
-              <FontAwesome name='facebook' size={20} color='#4267B2' />
-            </View>
-            <Text style={styles.socialButtonText}>Continue with Facebook</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -107,19 +199,10 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 20,
   },
-  headerImage: {
-    width: "100%",
-    height: 200,
-    marginBottom: 20,
-  },
   welcomeText: {
     color: colors.primary,
     fontWeight: "bold",
     marginBottom: 10,
-  },
-  subtitleText: {
-    color: colors.textSecondary,
-    marginBottom: 15,
   },
   input: {
     marginBottom: 15,
