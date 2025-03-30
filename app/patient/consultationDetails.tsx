@@ -61,11 +61,23 @@ export default function ConsultationDetails() {
           />
         );
       case TabKey.MEDICATION:
-        return <MedicationSection />;
+        return (
+          <MedicationSection
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.MEDICAL_CERT:
-        return <MedicalCertificate />;
+        return (
+          <MedicalCertificate
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.RECEIPT:
-        return <Receipt />;
+        return (
+          <Receipt
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       default:
         return null;
     }
