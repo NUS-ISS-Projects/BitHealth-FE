@@ -1,98 +1,184 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View, TouchableOpacity } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { Text, TextInput, Button, Avatar } from "react-native-paper";
 import colors from "../theme/colors";
+import * as ImagePicker from "expo-image-picker";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import axios from "axios";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function DoctorSettings() {
-  const [fullName, setFullName] = useState("Dr. Budi Sound");
-  const [email, setEmail] = useState("budi@example.com");
-  const [phone, setPhone] = useState("+62 812 3456 7890");
-  const [avatar, setAvatar] = useState("");
-  const [specialty, setSpecialty] = useState("Aesthetic Doctor");
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSave = () => {
-    console.log("Profile saved", {
-      fullName,
-      email,
-      phone,
-      specialty,
-      avatar,
-    });
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const updateData = {
+        name: fullName,
+        email: email,
+        specialization: specialty,
+        avatar: avatar,
+      };
+
+      const response = await axios.put(`${API_URL}/api/doctors/1`, updateData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Profile updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadDoctorData = async () => {
+      setLoading(true);
+      try {
+        const doctorData = await fetchDoctorSettings(1);
+        setFullName(doctorData.user.name || "");
+        setEmail(doctorData.user.email || "");
+        setSpecialty(doctorData.specialization || "");
+        if (doctorData.avatar) {
+          if (
+            doctorData.avatar.startsWith("data:image") &&
+            doctorData.avatar.includes("http")
+          ) {
+            setAvatar(null);
+          } else {
+            setAvatar(
+              doctorData.avatar.startsWith("data:image")
+                ? doctorData.avatar
+                : `data:image/jpeg;base64,${doctorData.avatar}`
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load patient data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDoctorData();
+  }, []);
+
+  async function fetchDoctorSettings(doctorId: number) {
+    try {
+      const response = await axios.get(`${API_URL}/api/doctors/${doctorId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching patient settings:", error);
+      throw error;
+    }
+  }
+
+  const handleAvatarSelect = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        base64: true,
+      });
+
+      if (!result.canceled) {
+        const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
+        setAvatar(base64Image);
+      }
+    } catch (error) {
+      console.error("Error selecting image:", error);
+    }
+  };
+  const getInitials = (name: string) => {
+    if (!name) return "";
+    const names = name.split(" ");
+    const initials = names.map((n) => n.charAt(0).toUpperCase());
+    return initials.join("").substring(0, 2);
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Settings</Text>
-      <View style={styles.avatarContainer}>
-        <Avatar.Image
-          size={100}
-          source={require("../../assets/images/favicon.png")}
+    <SafeAreaProvider>
+      <ScrollView style={styles.container}>
+        <Text style={styles.header}>Settings</Text>
+        <View style={styles.avatarContainer}>
+          {avatar ? (
+            <Avatar.Image
+              size={100}
+              source={{ uri: avatar }}
+              onError={() => setAvatar(null)}
+            />
+          ) : (
+            <Avatar.Text size={100} label={getInitials(fullName)} />
+          )}
+          <TouchableOpacity
+            style={styles.editAvatar}
+            onPress={handleAvatarSelect}
+          >
+            <Text style={styles.editAvatarText}>Edit</Text>
+          </TouchableOpacity>
+        </View>
+        <TextInput
+          label='Full Name'
+          value={fullName}
+          onChangeText={setFullName}
+          style={styles.input}
+          theme={{
+            colors: {
+              primary: "white",
+            },
+          }}
         />
-        <TouchableOpacity style={styles.editAvatar}>
-          <Text style={styles.editAvatarText}>Edit</Text>
-        </TouchableOpacity>
-      </View>
-      <TextInput
-        label='Full Name'
-        mode='outlined'
-        value={fullName}
-        onChangeText={setFullName}
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.primary,
-          },
-        }}
-      />
-      <TextInput
-        label='Specialty'
-        mode='outlined'
-        value={specialty}
-        onChangeText={setSpecialty}
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.primary,
-          },
-        }}
-      />
-      <TextInput
-        label='Email'
-        mode='outlined'
-        value={email}
-        onChangeText={setEmail}
-        keyboardType='email-address'
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.primary,
-          },
-        }}
-      />
-      <TextInput
-        label='Phone Number'
-        mode='outlined'
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType='phone-pad'
-        style={styles.input}
-        theme={{
-          colors: {
-            primary: colors.primary,
-          },
-        }}
-      />
+        <TextInput
+          label='Specialty'
+          value={specialty}
+          onChangeText={setSpecialty}
+          style={styles.input}
+          theme={{
+            colors: {
+              primary: "white",
+            },
+          }}
+        />
+        <TextInput
+          label='Email'
+          value={email}
+          onChangeText={setEmail}
+          keyboardType='email-address'
+          style={styles.input}
+          theme={{
+            colors: {
+              primary: "white",
+            },
+          }}
+        />
 
-      {/* Save Button */}
-      <Button
-        mode='contained'
-        style={styles.saveButton}
-        labelStyle={styles.saveButtonText}
-        onPress={handleSave}
-      >
-        Save Changes
-      </Button>
-    </ScrollView>
+        {/* Save Button */}
+        <Button
+          mode='contained'
+          style={styles.saveButton}
+          labelStyle={styles.saveButtonText}
+          onPress={handleSave}
+        >
+          Save Changes
+        </Button>
+      </ScrollView>
+    </SafeAreaProvider>
   );
 }
 

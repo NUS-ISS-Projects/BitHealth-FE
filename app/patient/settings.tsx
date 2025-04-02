@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View, TouchableOpacity } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { Alert } from "react-native";
 import { DatePickerInput } from "react-native-paper-dates";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {

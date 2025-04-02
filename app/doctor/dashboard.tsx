@@ -43,6 +43,15 @@ const mockPendingRequests = [
   },
 ];
 
+const getAvatarSource = (patient: { id?: number; image?: any }) => {
+  if (patient.image) {
+    return patient.image;
+  }
+  // Use name as seed if no ID is available
+  const seed = patient.id;
+  return { uri: `https://i.pravatar.cc/50?img=${seed}` };
+};
+
 export default function DoctorDashboard() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [confirmedAppointments, setConfirmedAppointments] = useState(
@@ -108,7 +117,13 @@ export default function DoctorDashboard() {
               </View>
             </View>
             <View style={styles.patientInfoContainer}>
-              <Avatar.Image size={50} source={currentRequest.avatar} />
+              <Avatar.Image
+                size={50}
+                source={getAvatarSource({
+                  id: currentRequest.id,
+                  image: "",
+                })}
+              />
               <View style={styles.infoContainer}>
                 <Text style={styles.patientName}>
                   {currentRequest.patientName}
@@ -121,6 +136,7 @@ export default function DoctorDashboard() {
                 mode='contained'
                 style={[styles.confirmButton, { flex: 0.6 }]}
                 onPress={() => handleConfirm(currentRequest.id)}
+                textColor='#FFFFFF'
               >
                 Accept
               </Button>
@@ -153,7 +169,13 @@ export default function DoctorDashboard() {
         confirmedAppointments.map((appointment) => (
           <Card key={appointment.id} style={styles.appointmentCard}>
             <Card.Content style={styles.cardContent}>
-              <Avatar.Image size={50} source={appointment.avatar} />
+              <Avatar.Image
+                size={50}
+                source={getAvatarSource({
+                  id: currentRequest.id,
+                  image: "",
+                })}
+              />
               <View style={styles.infoContainer}>
                 <Text style={styles.patientName}>
                   {appointment.patientName}
