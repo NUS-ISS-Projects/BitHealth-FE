@@ -4,47 +4,9 @@ import { Text, Button, Card, Avatar } from "react-native-paper";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 import axios from "axios";
+import { formatDate, formatTime } from "../helper/dateTimeFormatter";
+import { getAvatarSource } from "../helper/avatarGenerator";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-const getAvatarSource = (doctor: {
-  name: string;
-  id?: number;
-  image?: any;
-}) => {
-  if (doctor.image) {
-    return doctor.image;
-  }
-  // Use name as seed if no ID is available
-  const seed = doctor.id;
-  return { uri: `https://i.pravatar.cc/50?img=${seed}` };
-};
-
-const formatDate = (date: string) => {
-  const [year, month, day] = date.split("-");
-  const map = {
-    "01": "Jan",
-    "02": "Feb",
-    "03": "Mar",
-    "04": "Apr",
-    "05": "May",
-    "06": "Jun",
-    "07": "Jul",
-    "08": "Aug",
-    "09": "Sep",
-    "10": "Oct",
-    "11": "Nov",
-    "12": "Dec",
-  };
-  return `${day} ${map[month as keyof typeof map]} ${year}`;
-};
-
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? "pm" : "am";
-  const formattedHour = hour % 12 || 12;
-  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
-};
 
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();

@@ -5,127 +5,88 @@ import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
+import { formatTime, formatDate } from "../helper/dateTimeFormatter";
+import { getAvatarSource } from "../helper/avatarGenerator";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-const mockConfirmedAppointments = [
-  {
-    id: 1,
-    patientName: "Ferdi Klakson",
-    date: "24 Feb 2025",
-    time: "10:00 AM",
-    reason: "General Checkup",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-  {
-    id: 2,
-    patientName: "Yuda Bukan Main",
-    date: "24 Feb 2025",
-    time: "11:30 AM",
-    reason: "Follow-up",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-];
-
-const mockPendingRequests = [
-  {
-    id: 3,
-    patientName: "Alicia Keys",
-    date: "24 Feb 2025",
-    time: "2:00 PM",
-    reason: "Skin Consultation",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-  {
-    id: 4,
-    patientName: "Bob Martin",
-    date: "24 Feb 2025",
-    time: "2:30 PM",
-    reason: "Medication Refill",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-];
-
-const getAvatarSource = (doctor: { id?: number; image?: any }) => {
-  if (doctor.image) {
-    return doctor.image;
-  }
-  // Use name as seed if no ID is available
-  const seed = doctor.id;
-  return { uri: `https://i.pravatar.cc/50?img=${seed}` };
-};
-
-const formatDate = (date: string) => {
-  const [year, month, day] = date.split("-");
-  const map = {
-    "01": "Jan",
-    "02": "Feb",
-    "03": "Mar",
-    "04": "Apr",
-    "05": "May",
-    "06": "Jun",
-    "07": "Jul",
-    "08": "Aug",
-    "09": "Sep",
-    "10": "Oct",
-    "11": "Nov",
-    "12": "Dec",
-  };
-  return `${day} ${map[month as keyof typeof map]} ${year}`;
-};
-
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? "pm" : "am";
-  const formattedHour = hour % 12 || 12;
-  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
-};
 
 export default function DoctorDashboard() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [confirmedAppointments, setConfirmedAppointments] = useState<any[]>([]);
   const [pendingAppointments, setPendingAppointments] = useState<any[]>([]);
-  const [pendingRequests, setPendingRequests] = useState(mockPendingRequests);
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentRequest = pendingAppointments[currentIndex];
   const [userName, setUserName] = useState("");
 
-  const handleConfirm = (requestId: any) => {
-    const request = pendingRequests.find((r) => r.id === requestId);
-    if (request) {
-      setConfirmedAppointments([...confirmedAppointments, request]);
-      const newPending = pendingRequests.filter((r) => r.id !== requestId);
-      setPendingRequests(newPending);
-      if (currentIndex >= newPending.length) {
-        setCurrentIndex(0);
+  const handleConfirm = async (requestId: any) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/appointments/updateStatus/${requestId}`,
+        { status: "CONFIRMED" }
+      );
+
+      if (response.status === 200) {
+        const request = pendingAppointments.find(
+          (r: any) => r.id === requestId
+        );
+        if (request) {
+          setConfirmedAppointments([...confirmedAppointments, request]);
+          const newPending = pendingAppointments.filter(
+            (r: any) => r.id !== requestId
+          );
+          setPendingAppointments(newPending);
+          if (currentIndex >= newPending.length) {
+            setCurrentIndex(0);
+          }
+        }
+        await fetchAppointments();
       }
+    } catch (error) {
+      console.error("Failed to update appointment status:", error);
     }
   };
 
-  const handleReject = (requestId: any) => {
-    const newPending = pendingRequests.filter((r) => r.id !== requestId);
-    setPendingRequests(newPending);
-    if (currentIndex >= newPending.length) {
-      setCurrentIndex(0);
+  const handleReject = async (requestId: any) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/appointments/updateStatus/${requestId}`,
+        { status: "REJECTED" }
+      );
+
+      if (response.status === 200) {
+        const request = pendingAppointments.find(
+          (r: any) => r.id === requestId
+        );
+        if (request) {
+          setConfirmedAppointments([...confirmedAppointments, request]);
+          const newPending = pendingAppointments.filter(
+            (r: any) => r.id !== requestId
+          );
+          setPendingAppointments(newPending);
+          if (currentIndex >= newPending.length) {
+            setCurrentIndex(0);
+          }
+        }
+        await fetchAppointments();
+      }
+    } catch (error) {
+      console.error("Failed to update appointment status:", error);
+    }
+  };
+  const fetchAppointments = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/appointments/doctor/2`);
+      const data = response.data;
+      setUserName(data[0].patient.user.name);
+      const pending = data.filter((apt: any) => apt.status === "PENDING");
+      const confirmed = data.filter((apt: any) => apt.status == "CONFIRMED");
+      setPendingAppointments(pending);
+      setConfirmedAppointments(confirmed);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
     }
   };
 
   useEffect(() => {
-    async function fetchAppointments() {
-      try {
-        const response = await axios.get(
-          `${API_URL}/api/appointments/doctor/2`
-        );
-        const data = response.data;
-        setUserName(data[0].patient.user.name);
-        const pending = data.filter((apt: any) => apt.status === "PENDING");
-        const confirmed = data.filter((apt: any) => apt.status == "CONFIRMED");
-        setPendingAppointments(pending);
-        setConfirmedAppointments(confirmed);
-      } catch (error) {
-        console.error("Error fetching appointments:", error);
-      }
-    }
     fetchAppointments();
   }, []);
 
@@ -186,7 +147,7 @@ export default function DoctorDashboard() {
               <Button
                 mode='contained'
                 style={[styles.confirmButton, { flex: 0.6 }]}
-                onPress={() => handleConfirm(currentRequest.id)}
+                onPress={() => handleConfirm(currentRequest.appointmentId)}
                 textColor='#FFFFFF'
               >
                 Accept
@@ -194,7 +155,7 @@ export default function DoctorDashboard() {
               <Button
                 mode='outlined'
                 style={[styles.rejectButton, { flex: 0.4 }]}
-                onPress={() => handleReject(currentRequest.id)}
+                onPress={() => handleReject(currentRequest.appointmentId)}
                 textColor='#123D1F'
               >
                 Decline
@@ -247,6 +208,12 @@ export default function DoctorDashboard() {
                 onPress={() =>
                   navigation.navigate("Prescription", {
                     appointmentId: appointment.appointmentId,
+                    userName: appointment.patient.user.name,
+                    patientUserId: appointment.patient.user.userId,
+                    appointmentDate: appointment.appointmentDate,
+                    appointmentTime: appointment.appointmentTime,
+                    comment: appointment.comment,
+                    reasonForVisit: appointment.reasonForVisit,
                   })
                 }
               >

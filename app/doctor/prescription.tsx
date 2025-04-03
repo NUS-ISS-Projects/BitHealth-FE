@@ -1,18 +1,37 @@
 import React from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Card, Text, Button, IconButton } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
+import { formatDate, formatTime } from "../helper/dateTimeFormatter";
+import { getAvatarSource } from "../helper/avatarGenerator";
+
+type AppointmentParams = {
+  appointmentId?: string;
+  userName?: string;
+  patientUserId?: number;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  comment?: string;
+  reasonForVisit?: string;
+};
 
 const PrescriptionScreen: React.FC = () => {
+  const route = useRoute();
   const {
     appointmentId,
-    patientName = "John Doe",
-    patientDetails = "Hello Dr, I am down with a cold and having sort throat.",
-    date = "12 Jan 2024, 8am-10am",
-  } = useLocalSearchParams();
+    userName,
+    patientUserId,
+    appointmentDate,
+    appointmentTime,
+    comment,
+    reasonForVisit,
+  } = route.params as AppointmentParams;
 
   const navigation = useNavigation<NavigationProp<any>>();
 
@@ -49,21 +68,30 @@ const PrescriptionScreen: React.FC = () => {
       <Card style={styles.card}>
         <View style={styles.cardHeaderContainer}>
           <FontAwesome name='clock-o' size={24} color='#123D1F' />
-          <Text style={styles.cardHeader}>{date}</Text>
+          <Text style={styles.cardHeader}>
+            {formatDate(appointmentDate || "")} |{" "}
+            {formatTime(appointmentTime || "")}
+          </Text>
         </View>
         <Card.Title
-          title={patientName}
+          title={userName}
+          titleStyle={styles.cardUser}
+          subtitle={reasonForVisit}
+          subtitleStyle={styles.subtitle}
           left={(props) => (
             <Card.Cover
               {...props}
-              source={require("../../assets/images/favicon.png")}
+              source={getAvatarSource({
+                id: patientUserId || 0,
+                image: "",
+              })}
               style={styles.avatar}
             />
           )}
         />
         <Card.Content>
           <Text style={styles.detailheading}>Comment:</Text>
-          <Text style={styles.detailsText}>{patientDetails}</Text>
+          <Text style={styles.detailsText}>{comment}</Text>
         </Card.Content>
       </Card>
 
@@ -147,6 +175,18 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 18,
     color: colors.primary,
+    fontWeight: "bold",
+  },
+  cardUser: {
+    marginLeft: 10,
+    fontSize: 18,
+    color: "black",
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 14,
+    marginLeft: 10,
+    color: colors.textSecondary,
     fontWeight: "bold",
   },
   card: {
