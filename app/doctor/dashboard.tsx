@@ -5,8 +5,8 @@ import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
-import { formatTime, formatDate } from "../helper/dateTimeFormatter";
-import { getAvatarSource } from "../helper/avatarGenerator";
+import { formatTime, formatDate } from "../../helper/dateTimeFormatter";
+import { getAvatarSource } from "../../helper/avatarGenerator";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function DoctorDashboard() {
@@ -17,39 +17,11 @@ export default function DoctorDashboard() {
   const currentRequest = pendingAppointments[currentIndex];
   const [userName, setUserName] = useState("");
 
-  const handleConfirm = async (requestId: any) => {
+  const updateAppointmentStatus = async (requestId: any, newStatus: string) => {
     try {
       const response = await axios.put(
         `${API_URL}/api/appointments/updateStatus/${requestId}`,
-        { status: "CONFIRMED" }
-      );
-
-      if (response.status === 200) {
-        const request = pendingAppointments.find(
-          (r: any) => r.id === requestId
-        );
-        if (request) {
-          setConfirmedAppointments([...confirmedAppointments, request]);
-          const newPending = pendingAppointments.filter(
-            (r: any) => r.id !== requestId
-          );
-          setPendingAppointments(newPending);
-          if (currentIndex >= newPending.length) {
-            setCurrentIndex(0);
-          }
-        }
-        await fetchAppointments();
-      }
-    } catch (error) {
-      console.error("Failed to update appointment status:", error);
-    }
-  };
-
-  const handleReject = async (requestId: any) => {
-    try {
-      const response = await axios.put(
-        `${API_URL}/api/appointments/updateStatus/${requestId}`,
-        { status: "REJECTED" }
+        { status: newStatus }
       );
 
       if (response.status === 200) {
@@ -147,7 +119,12 @@ export default function DoctorDashboard() {
               <Button
                 mode='contained'
                 style={[styles.confirmButton, { flex: 0.6 }]}
-                onPress={() => handleConfirm(currentRequest.appointmentId)}
+                onPress={() =>
+                  updateAppointmentStatus(
+                    currentRequest.appointmentId,
+                    "CONFIRMED"
+                  )
+                }
                 textColor='#FFFFFF'
               >
                 Accept
@@ -155,7 +132,12 @@ export default function DoctorDashboard() {
               <Button
                 mode='outlined'
                 style={[styles.rejectButton, { flex: 0.4 }]}
-                onPress={() => handleReject(currentRequest.appointmentId)}
+                onPress={() =>
+                  updateAppointmentStatus(
+                    currentRequest.appointmentId,
+                    "REJECTED"
+                  )
+                }
                 textColor='#123D1F'
               >
                 Decline

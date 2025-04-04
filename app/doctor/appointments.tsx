@@ -4,21 +4,9 @@ import { Text, Card, Badge } from "react-native-paper";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
-import { formatDate, formatTime } from "../helper/dateTimeFormatter";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import { getStatusColor } from "../../helper/statusColor";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "COMPLETED":
-      return "#4CAF50";
-    case "REJECTED":
-      return "#D32F2F";
-    case "EXPIRED":
-      return "#757575";
-    default:
-      return colors.primary;
-  }
-};
 
 export default function DoctorAppointmentsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -43,8 +31,17 @@ export default function DoctorAppointmentsScreen() {
     fetchAppointments();
   }, []);
 
-  const handleCardPress = (appointmentId: number) => {
-    navigation.navigate("Prescription", { appointmentId });
+  const handleCardPress = (appointment: any) => {
+    navigation.navigate("Prescription", {
+      appointmentId: appointment.appointmentId,
+      userName: appointment.patient.user.name,
+      patientUserId: appointment.patient.user.userId,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      comment: appointment.comment,
+      reasonForVisit: appointment.reasonForVisit,
+      appointmentStatus: appointment.status,
+    });
   };
 
   if (loading) {
@@ -62,7 +59,7 @@ export default function DoctorAppointmentsScreen() {
         <Card
           key={appointment.appointmentId}
           style={styles.card}
-          onPress={() => handleCardPress(appointment.appointmentId)}
+          onPress={() => handleCardPress(appointment)}
         >
           <Card.Content style={styles.cardContent}>
             <View style={styles.infoContainer}>
@@ -129,12 +126,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   badge: {
-    fontSize: 8,
-    color: "#FFFFFF",
-    borderRadius: 4,
-    height: 30,
-    width: 80,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 20,
+    width: 100,
+    marginHorizontal: 10,
+    color: "white",
   },
 });

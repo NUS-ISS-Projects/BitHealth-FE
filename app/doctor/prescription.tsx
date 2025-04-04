@@ -8,8 +8,10 @@ import {
 } from "@react-navigation/native";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
-import { formatDate, formatTime } from "../helper/dateTimeFormatter";
-import { getAvatarSource } from "../helper/avatarGenerator";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import { getAvatarSource } from "../../helper/avatarGenerator";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import axios from "axios";
 
 type AppointmentParams = {
   appointmentId?: string;
@@ -19,6 +21,7 @@ type AppointmentParams = {
   appointmentTime?: string;
   comment?: string;
   reasonForVisit?: string;
+  appointmentStatus?: string;
 };
 
 const PrescriptionScreen: React.FC = () => {
@@ -31,6 +34,7 @@ const PrescriptionScreen: React.FC = () => {
     appointmentTime,
     comment,
     reasonForVisit,
+    appointmentStatus,
   } = route.params as AppointmentParams;
 
   const navigation = useNavigation<NavigationProp<any>>();
@@ -47,8 +51,18 @@ const PrescriptionScreen: React.FC = () => {
     navigation.navigate("PrescriptionDetails", { appointmentId });
   };
 
-  const handleComplete = () => {
-    navigation.navigate("DashboardMain");
+  const updateAppointmentStatus = async (newStatus: string) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/appointments/updateStatus/${appointmentId}`,
+        { status: newStatus }
+      );
+      if (response.status === 200) {
+        navigation.navigate("Appointments");
+      }
+    } catch (error) {
+      console.error("Failed to update appointment status:", error);
+    }
   };
 
   return (
@@ -62,7 +76,9 @@ const PrescriptionScreen: React.FC = () => {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Appointment Details</Text>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text style={styles.headerBar}>Appointment Details</Text>
+        </View>
       </View>
       {/* Patient Details Card */}
       <Card style={styles.card}>
@@ -95,53 +111,92 @@ const PrescriptionScreen: React.FC = () => {
         </Card.Content>
       </Card>
 
-      {/* Buttons to upload documents */}
-      <View style={styles.buttonsContainer}>
-        <Button
-          mode='outlined'
-          style={styles.outlinedButton}
-          labelStyle={styles.outlinedButtonText}
-          onPress={handleDiagnosis}
-          icon={() => (
-            <FontAwesome name='stethoscope' size={20} color={colors.primary} />
+      {!(
+        appointmentStatus === "REJECTED" || appointmentStatus === "CANCELLED"
+      ) && (
+        <View style={styles.buttonsContainer}>
+          <Button
+            mode='outlined'
+            style={styles.outlinedButton}
+            labelStyle={styles.outlinedButtonText}
+            onPress={handleDiagnosis}
+            icon={() => (
+              <FontAwesome
+                name='stethoscope'
+                size={20}
+                color={colors.primary}
+              />
+            )}
+          >
+            Diagnosis
+          </Button>
+          <Button
+            mode='outlined'
+            style={styles.outlinedButton}
+            labelStyle={styles.outlinedButtonText}
+            onPress={handleMedicalCertificate}
+            icon={() => (
+              <FontAwesome
+                name='file-text-o'
+                size={20}
+                color={colors.primary}
+              />
+            )}
+          >
+            Medical Certificate
+          </Button>
+          <Button
+            mode='outlined'
+            style={styles.outlinedButton}
+            labelStyle={styles.outlinedButtonText}
+            onPress={handlePrescription}
+            icon={() => (
+              <FontAwesome name='star' size={20} color={colors.primary} />
+            )}
+          >
+            Prescription
+          </Button>
+          {appointmentStatus === "PENDING" && (
+            <View style={styles.buttonsContainer}>
+              <Button
+                mode='contained'
+                style={styles.button}
+                labelStyle={styles.buttonText}
+                onPress={() => updateAppointmentStatus("CONFIRMED")}
+                icon={() => (
+                  <FontAwesome name='check-circle' size={20} color='#FFFFFF' />
+                )}
+              >
+                Accept Appointment
+              </Button>
+              <Button
+                mode='contained'
+                style={[styles.rejectButton]}
+                labelStyle={styles.rejectbuttonText}
+                onPress={() => updateAppointmentStatus("REJECTED")}
+                icon={() => (
+                  <FontAwesome name='times-circle' size={20} color='#123D1F' />
+                )}
+              >
+                Reject Appointment
+              </Button>
+            </View>
           )}
-        >
-          Diagnosis
-        </Button>
-        <Button
-          mode='outlined'
-          style={styles.outlinedButton}
-          labelStyle={styles.outlinedButtonText}
-          onPress={handleMedicalCertificate}
-          icon={() => (
-            <FontAwesome name='file-text-o' size={20} color={colors.primary} />
+          {appointmentStatus === "CONFIRMED" && (
+            <Button
+              mode='contained'
+              style={styles.button}
+              labelStyle={styles.buttonText}
+              onPress={() => updateAppointmentStatus("COMPLETED")}
+              icon={() => (
+                <FontAwesome name='check-circle' size={20} color='#FFFFFF' />
+              )}
+            >
+              Complete Appointment
+            </Button>
           )}
-        >
-          Medical Certificate
-        </Button>
-        <Button
-          mode='outlined'
-          style={styles.outlinedButton}
-          labelStyle={styles.outlinedButtonText}
-          onPress={handlePrescription}
-          icon={() => (
-            <FontAwesome name='star' size={20} color={colors.primary} />
-          )}
-        >
-          Prescription
-        </Button>
-        <Button
-          mode='contained'
-          style={styles.button}
-          labelStyle={styles.buttonText}
-          onPress={handleComplete}
-          icon={() => (
-            <FontAwesome name='check-circle' size={20} color='#FFFFFF' />
-          )}
-        >
-          Complete Appointment
-        </Button>
-      </View>
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -163,7 +218,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 50,
   },
   cardHeaderContainer: {
     paddingHorizontal: 20,
@@ -213,6 +267,19 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.primary,
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginBottom: 20,
+  },
+  rejectbuttonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.primary,
+  },
+  rejectButton: {
+    borderColor: colors.primary,
+    backgroundColor: "transparent",
+    borderWidth: 1,
     borderRadius: 50,
     paddingVertical: 10,
     marginBottom: 20,

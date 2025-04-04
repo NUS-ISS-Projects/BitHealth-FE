@@ -4,8 +4,8 @@ import { Text, Button, Card, Avatar } from "react-native-paper";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import colors from "../theme/colors";
 import axios from "axios";
-import { formatDate, formatTime } from "../helper/dateTimeFormatter";
-import { getAvatarSource } from "../helper/avatarGenerator";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import { getAvatarSource } from "../../helper/avatarGenerator";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function PatientHome() {
