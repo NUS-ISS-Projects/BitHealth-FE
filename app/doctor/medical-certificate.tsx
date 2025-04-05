@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import {
   Text,
   TextInput,
@@ -8,30 +8,52 @@ import {
   IconButton,
   Chip,
 } from "react-native-paper";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 import colors from "../theme/colors";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import axios from "axios";
+import {
+  formatDate,
+  formatDateForDisplay,
+  formatDateForSaving,
+} from "../../helper/dateTimeFormatter";
+import { DatePickerModal } from "react-native-paper-dates";
 
-const formFields = [
-  { label: "MC No.", field: "mcNo" },
-  { label: "No. of Days", field: "noOfDays" },
-  { label: "Issue Date", field: "issueDate" },
-  { label: "With Effect From", field: "effectiveFrom" },
-];
+type AppointmentParams = {
+  appointmentId?: string;
+  userName?: string;
+  appointmentDate?: string;
+};
 
 export default function MedicalCertificateScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
-
-  const [formData, setFormData] = useState({
-    mcNo: "",
-    noOfDays: "",
-    issueDate: "",
-    effectiveFrom: "",
-  });
+  const route = useRoute();
+  const { appointmentId, userName, appointmentDate } =
+    route.params as AppointmentParams;
+  const year = appointmentDate
+    ? new Date(appointmentDate).getFullYear()
+    : new Date().getFullYear();
+  const autoMCNo = appointmentId ? `MC-${year}-${appointmentId}` : "";
   const [status, setStatus] = useState("Pending");
+  const [noOfDays, setNoOfDays] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [issueDate, setIssueDate] = useState<Date | null>(null);
+  const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
+  const [showIssueDatePicker, setShowIssueDatePicker] = useState(false);
+  const [showEffectiveDatePicker, setShowEffectiveDatePicker] = useState(false);
 
-  const handleChange = (field: keyof typeof formData) => (value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const onEffectiveDateConfirm = (params: any) => {
+    setShowEffectiveDatePicker(false);
+    setEffectiveDate(params.date);
+  };
+
+  const onIssueDateConfirm = (params: any) => {
+    setShowIssueDatePicker(false);
+    setIssueDate(params.date);
   };
 
   const handleApprove = () => {
@@ -50,53 +72,118 @@ export default function MedicalCertificateScreen() {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Enter Medical Certificate Details</Text>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text style={styles.headerBar}>
+            Enter Medical Certificate Details
+          </Text>
+        </View>
       </View>
       <View style={styles.contentContainer}>
         <Card style={styles.card}>
           <Card.Title
-            title='Patient name: Jong Yann'
-            subtitle='Date of visit: 18-03-2025'
+            title={`Patient name: ${userName}`}
+            subtitle={`Date of visit: ${formatDate(appointmentDate || "")}`}
             titleStyle={{ color: "black", fontWeight: "bold" }}
             subtitleStyle={{ color: "black", fontWeight: "bold" }}
           />
           <Card.Content>
-            {formFields.map((field) => (
-              <TextInput
-                key={field.field}
-                label={field.label}
-                mode='outlined'
-                value={formData[field.field as keyof typeof formData]}
-                onChangeText={handleChange(
-                  field.field as keyof typeof formData
-                )}
-                style={[styles.input]}
-                theme={{
-                  colors: {
-                    primary: colors.primary,
-                  },
-                }}
-              />
-            ))}
-
             <View style={styles.statusContainer}>
-              <Chip
-                mode='flat'
-                style={[
-                  styles.statusChip,
-                  status === "Approved"
-                    ? styles.approvedChip
-                    : styles.pendingChip,
-                ]}
-                textStyle={styles.statusChipText}
+              <Text style={styles.fieldsHeader}>MC No.</Text>
+              <TextInput
+                value={autoMCNo}
+                disabled
+                textColor='black'
+                style={[styles.input, { backgroundColor: "#F0F0F0" }]}
+                theme={{ colors: { primary: "white" } }}
+              />
+              <Text style={styles.fieldsHeader}>No. of Days</Text>
+              <TextInput
+                value={noOfDays}
+                placeholder='Enter No. of Days'
+                onChangeText={(text) => setNoOfDays(text)}
+                style={styles.input}
+                theme={{ colors: { primary: "white" } }}
+                keyboardType='numeric'
+              />
+              {/* Issue Date with DatePicker */}
+              <Text style={styles.fieldsHeader}>Issue Date</Text>
+              <TouchableOpacity onPress={() => setShowIssueDatePicker(true)}>
+                <TextInput
+                  placeholder='Select Issue Date'
+                  value={
+                    issueDate
+                      ? formatDateForDisplay(issueDate.toISOString())
+                      : ""
+                  }
+                  style={styles.input}
+                  theme={{ colors: { primary: "white" } }}
+                  editable={false}
+                  pointerEvents='none'
+                />
+              </TouchableOpacity>
+              <DatePickerModal
+                locale='en'
+                mode='single'
+                visible={showIssueDatePicker}
+                onDismiss={() => setShowIssueDatePicker(false)}
+                date={issueDate || new Date()}
+                onConfirm={onIssueDateConfirm}
+              />
+              {/* Effective From with DatePicker */}
+              <Text style={styles.fieldsHeader}>With Effect From</Text>
+              <TouchableOpacity
+                onPress={() => setShowEffectiveDatePicker(true)}
               >
-                {status}
-              </Chip>
-              {lastUpdated && (
-                <Text style={styles.lastUpdatedText}>
-                  Last Updated: {lastUpdated.toLocaleString()}
-                </Text>
-              )}
+                <TextInput
+                  value={
+                    effectiveDate
+                      ? formatDateForDisplay(effectiveDate.toISOString())
+                      : ""
+                  }
+                  placeholder='Select Effective Date'
+                  style={styles.input}
+                  theme={{ colors: { primary: "white" } }}
+                  editable={false}
+                  pointerEvents='none'
+                />
+              </TouchableOpacity>
+              <DatePickerModal
+                locale='en'
+                mode='single'
+                visible={showEffectiveDatePicker}
+                onDismiss={() => setShowEffectiveDatePicker(false)}
+                date={effectiveDate || new Date()}
+                onConfirm={onEffectiveDateConfirm}
+              />
+              <View style={styles.statusContainer}>
+                <Chip
+                  mode='flat'
+                  style={[
+                    styles.statusChip,
+                    status === "Approved"
+                      ? styles.approvedChip
+                      : styles.pendingChip,
+                  ]}
+                  textStyle={styles.statusChipText}
+                >
+                  {status}
+                </Chip>
+                {lastUpdated && (
+                  <Text style={styles.lastUpdatedText}>
+                    Last Updated: {lastUpdated.toLocaleString()}
+                  </Text>
+                )}
+              </View>
+            </View>
+            <View style={styles.buttonContainer}>
+              <Button
+                mode='contained'
+                style={[styles.button, styles.updateButton]}
+                labelStyle={styles.updateButtonText}
+                onPress={handleApprove}
+              >
+                Update MC
+              </Button>
             </View>
 
             <View style={styles.buttonContainer}>
@@ -131,7 +218,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 10,
+  },
+  fieldsHeader: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: colors.primary,
+    marginBottom: 10,
+    marginTop: 10,
   },
   contentContainer: {
     paddingBottom: 40,
@@ -153,6 +246,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 20,
   },
   button: {
     backgroundColor: colors.primary,
@@ -160,6 +254,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     flex: 1,
     marginRight: 10,
+  },
+  updateButton: {
+    backgroundColor: "white",
+    marginRight: 0,
+    borderColor: colors.primary,
+    borderWidth: 1,
   },
   approveButton: {
     backgroundColor: colors.accent,
@@ -169,6 +269,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  updateButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.accent,
   },
   statusContainer: {
     marginVertical: 20,

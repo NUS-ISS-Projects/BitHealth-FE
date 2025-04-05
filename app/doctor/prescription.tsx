@@ -44,7 +44,11 @@ const PrescriptionScreen: React.FC = () => {
   };
 
   const handleMedicalCertificate = () => {
-    navigation.navigate("MedicalCertificate", { appointmentId });
+    navigation.navigate("MedicalCertificate", {
+      appointmentId,
+      userName,
+      appointmentDate,
+    });
   };
 
   const handlePrescription = () => {

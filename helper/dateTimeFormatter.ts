@@ -24,3 +24,20 @@ export const formatTime = (time: string) => {
   const formattedHour = hour % 12 || 12;
   return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
 };
+
+export function formatDateForDisplay(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function formatDateForSaving(dateStr: string): string {
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
