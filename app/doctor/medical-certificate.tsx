@@ -1,5 +1,12 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from "react-native";
 import {
   Text,
   TextInput,
@@ -20,14 +27,21 @@ import {
   formatDate,
   formatDateForDisplay,
   formatDateForSaving,
+  formatLastVerified,
 } from "../../helper/dateTimeFormatter";
-import { DatePickerModal } from "react-native-paper-dates";
+import {
+  DatePickerModal,
+  en,
+  registerTranslation,
+} from "react-native-paper-dates";
 
 type AppointmentParams = {
   appointmentId?: string;
   userName?: string;
   appointmentDate?: string;
 };
+
+registerTranslation("en", en);
 
 export default function MedicalCertificateScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -38,13 +52,20 @@ export default function MedicalCertificateScreen() {
     ? new Date(appointmentDate).getFullYear()
     : new Date().getFullYear();
   const autoMCNo = appointmentId ? `MC-${year}-${appointmentId}` : "";
-  const [status, setStatus] = useState("Pending");
   const [noOfDays, setNoOfDays] = useState("");
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [certificate, setCertificate] = useState<any>(null);
   const [issueDate, setIssueDate] = useState<Date | null>(null);
   const [effectiveDate, setEffectiveDate] = useState<Date | null>(null);
   const [showIssueDatePicker, setShowIssueDatePicker] = useState(false);
   const [showEffectiveDatePicker, setShowEffectiveDatePicker] = useState(false);
+
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
 
   const onEffectiveDateConfirm = (params: any) => {
     setShowEffectiveDatePicker(false);
@@ -56,9 +77,123 @@ export default function MedicalCertificateScreen() {
     setIssueDate(params.date);
   };
 
-  const handleApprove = () => {
-    setStatus("Approved");
-    setLastUpdated(new Date());
+  const handleApproveConfirmation = () => {
+    if (Platform.OS === "web") {
+      // For web, use window.confirm
+      if (window.confirm("Are you sure you want to approve the MC?")) {
+        handleApprove();
+      }
+    } else {
+      Alert.alert(
+        "Confirm Approval",
+        "Are you sure you want to approve the MC?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Approve", onPress: () => handleApprove(), style: "default" },
+        ]
+      );
+    }
+  };
+
+  const handleApprove = async () => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/medical-certificates/verify/${certificate.certificateId}`,
+        {
+          lastVerified: new Date().toLocaleString(),
+        }
+      );
+      if (response.status === 200) {
+        setCertificate({
+          ...certificate,
+          lastVerified: response.data.lastVerified,
+        });
+        showAlert("Success", "MC verified successfully.");
+        fetchMedicalCertificate();
+      }
+    } catch (error) {
+      console.error("Failed to verify certificate:", error);
+      showAlert("Error", "Failed to verify MC.");
+    }
+  };
+
+  const fetchMedicalCertificate = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/medical-certificates/appointment/${appointmentId}`
+      );
+      setCertificate(response.data);
+      setNoOfDays(response.data.noOfDays.toString());
+      if (response.data.issueDate) {
+        setIssueDate(new Date(response.data.issueDate));
+      }
+      if (response.data.effectFrom) {
+        setEffectiveDate(new Date(response.data.effectFrom));
+      }
+    } catch (error) {
+      console.error("Failed to fetch medical certificate:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (appointmentId) {
+      fetchMedicalCertificate();
+    }
+  }, [appointmentId]);
+
+  const handleSaveCertificate = async () => {
+    const formattedEffectFrom = issueDate
+      ? formatDateForSaving(issueDate.toISOString())
+      : "";
+    const formattedIssueDate = issueDate
+      ? formatDateForSaving(issueDate.toISOString())
+      : "";
+
+    if (certificate) {
+      // Update MC
+      try {
+        const response = await axios.put(
+          `${API_URL}/api/medical-certificates/${certificate.certificateId}`,
+          {
+            noOfDays: Number(noOfDays),
+            effectFrom: formattedEffectFrom,
+            issueDate: formattedIssueDate,
+          }
+        );
+        if (response.status === 200) {
+          setCertificate(response.data);
+          console.log("Certificate updated.");
+          showAlert("Success", "MC updated successfully.");
+          fetchMedicalCertificate();
+        }
+      } catch (error) {
+        console.error("Failed to update certificate:", error);
+        showAlert("Error", "Failed to update MC.");
+      }
+    } else {
+      // Create MC
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/medical-certificates`,
+          {
+            appointmentId: appointmentId,
+            certificateNumber: autoMCNo,
+            noOfDays: Number(noOfDays),
+            effectFrom: formattedEffectFrom,
+            issueDate: formattedIssueDate,
+          }
+        );
+        if (response.status === 200 || response.status === 201) {
+          setCertificate(response.data);
+          showAlert("Success", "MC created successfully.");
+          console.log("Certificate created.");
+          fetchMedicalCertificate();
+        }
+      } catch (error) {
+        console.error("Failed to create certificate:", error);
+        showAlert("Error", "Failed to create MC.");
+      }
+    }
   };
 
   return (
@@ -160,17 +295,19 @@ export default function MedicalCertificateScreen() {
                   mode='flat'
                   style={[
                     styles.statusChip,
-                    status === "Approved"
+                    certificate && certificate.isVerified
                       ? styles.approvedChip
                       : styles.pendingChip,
                   ]}
                   textStyle={styles.statusChipText}
                 >
-                  {status}
+                  {certificate && certificate.isVerified
+                    ? "Approved"
+                    : "Pending"}
                 </Chip>
-                {lastUpdated && (
+                {certificate && certificate.lastVerified && (
                   <Text style={styles.lastUpdatedText}>
-                    Last Updated: {lastUpdated.toLocaleString()}
+                    Last Updated: {formatLastVerified(certificate.lastVerified)}
                   </Text>
                 )}
               </View>
@@ -180,22 +317,24 @@ export default function MedicalCertificateScreen() {
                 mode='contained'
                 style={[styles.button, styles.updateButton]}
                 labelStyle={styles.updateButtonText}
-                onPress={handleApprove}
+                onPress={handleSaveCertificate}
               >
-                Update MC
+                {certificate ? "Update MC" : "Create MC"}
               </Button>
             </View>
 
-            <View style={styles.buttonContainer}>
-              <Button
-                mode='contained'
-                style={[styles.button, styles.approveButton]}
-                labelStyle={styles.buttonText}
-                onPress={handleApprove}
-              >
-                Approve
-              </Button>
-            </View>
+            {certificate && (
+              <View style={styles.buttonContainer}>
+                <Button
+                  mode='contained'
+                  style={[styles.button, styles.approveButton]}
+                  labelStyle={styles.buttonText}
+                  onPress={handleApproveConfirmation}
+                >
+                  Approve
+                </Button>
+              </View>
+            )}
           </Card.Content>
         </Card>
       </View>

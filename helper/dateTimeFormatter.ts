@@ -41,3 +41,39 @@ export function formatDateForSaving(dateStr: string): string {
   const day = date.getDate().toString().padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+export function formatLastVerified(dateString: string): string {
+  const date = new Date(dateString);
+  const day = date.getDate();
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+
+  const timeOptions: Intl.DateTimeFormatOptions = {
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: true,
+  };
+  let timeStr = date.toLocaleTimeString("en-US", timeOptions); // e.g. "9:38:26 PM"
+  timeStr = timeStr.replace(/(AM|PM)/, (match) => match.toLowerCase());
+  // Ensure there's a space before the lowercase am/pm if missing
+  if (!timeStr.match(/\s(am|pm)$/)) {
+    timeStr = timeStr.replace(/(am|pm)$/, " $1");
+  }
+
+  return `${day} ${month} ${year}, ${timeStr}`;
+}
