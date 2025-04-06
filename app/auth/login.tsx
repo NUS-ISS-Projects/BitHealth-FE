@@ -48,6 +48,29 @@ const ROUTES = {
   doctor: "/doctor/dashboard",
   patient: "/patient",
 };
+
+// Store data securely
+const storeData = async (key: string, value: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    localStorage.setItem(key, value);
+  } else {
+    // Use expo-secure-store for mobile
+    await SecureStore.setItemAsync(key, value);
+  }
+};
+
+// Retrieve data securely
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -164,7 +187,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#FFFFFF",
     padding: 20,
-    justifyContent: "center", // Center content vertically
+    justifyContent: "center",
   },
   headerContainer: {
     alignItems: "center",
