@@ -1,4 +1,5 @@
 import { FontAwesome } from "@expo/vector-icons";
+import axios from "axios";
 import * as Google from "expo-auth-session/providers/google";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -14,7 +15,11 @@ import { Button, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
 WebBrowser.maybeCompleteAuthSession();
 
-const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const ROUTES = {
+  doctor: "/doctor/dashboard",
+  patient: "/patient",
+};
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,26 +57,26 @@ const RegisterScreen = () => {
         role: userType, // Pass the user type (doctor/patient)
       };
 
-      const response = await fetch("http://localhost:8080/api/users/register", {
-        method: "POST",
+      console.log("Sending payload:", userData);
+
+      const response = await axios.post(`${API_URL}/api/users/register`, userData, {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(userData),
       });
+      console.log("Response data:", response.data);
 
-      if (!response.ok) {
-        throw new Error(`Failed to register user in Supabase: ${response.statusText}`);
-      }
+      if (!response.data || Object.keys(response.data).length === 0) {
+        throw new Error("Registration has failed.");
+    }
 
-      const responseData = await response.json();
-      console.log("User registered in Supabase:", responseData);
-      
-
-      console.log("User registered:", user);
-
+    const responseData = response.data;
+   
       // Redirect based on user type
-      router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+      router.push({
+        pathname: ROUTES[userType],
+        params: { userData: JSON.stringify(responseData) }, // Pass userData as a stringified JSON object
+      });
     } catch (error) {
       Alert.alert("Error", error.message || "Failed to register. Please try again.");
       console.error("Registration Error:", error.message);
@@ -96,8 +101,19 @@ const RegisterScreen = () => {
 
         console.log("User signed in with Google:", user);
 
+        //Register user in supabase
+       const userData = {
+        name: username || "No Name", // Use display name or fallback
+        email: email,
+        password: "GooglePass", // Use the Google ID token as the password (optional)
+        role: userType, // Pass the user type (doctor/patient)
+      };
+
         // Redirect based on user type
-        router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+        router.push({
+          pathname: ROUTES[userType],
+          params: { userData: JSON.stringify(userData) }, // Pass userData as a stringified JSON object
+        });
       }
     } catch (error) {
       Alert.alert("Error", error.message || "Failed to sign in with Google.");

@@ -1,11 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { View, Image, ScrollView, StyleSheet } from "react-native";
-import { Text, Button, Card, Avatar } from "react-native-paper";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import colors from "../theme/colors";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Avatar, Button, Card, Text } from "react-native-paper";
+import colors from "../theme/colors";
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
 const getAvatarSource = (doctor: {
   name: string;
   id?: number;
@@ -46,34 +57,57 @@ const formatTime = (time: string) => {
   return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
 };
 
+
+
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
 
+
   useEffect(() => {
     async function fetchAppointments() {
+      
       try {
-        const response = await axios.get(
-          `${API_URL}/api/appointments/patient/1`
+        const token = await getData("authToken");
+        if (!token) {
+          console.error("No authentication token found.");
+          return;
+        }
+      
+        // Fetch patient profile
+        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      
+        const { userId } = profileResponse.data; // Extract userId
+        console.log("User ID:", userId);
+      
+        // Fetch appointments
+        const appointmentsResponse = await axios.get(
+          `${API_URL}/api/appointments/patient/${userId}`
         );
-        const data = response.data;
+        const data = appointmentsResponse.data;
+      
         setUserName(data[0].patient.user.name);
         const upcoming = data.filter(
-          (apt: any) => apt.status === "PENDING" || apt.status === "CONFIRMED"
+          (apt: { status: string; }) => apt.status === "PENDING" || apt.status === "CONFIRMED"
         );
         const recent = data.filter(
-          (apt: any) => apt.status !== "PENDING" && apt.status !== "CONFIRMED"
+          (apt: { status: string; }) => apt.status !== "PENDING" && apt.status !== "CONFIRMED"
         );
+      
         setUpcomingAppointments(upcoming);
         setRecentAppointments(recent);
       } catch (error) {
-        console.error("Error fetching appointments:", error);
+        console.error("Error fetching data:", error);
       }
     }
     fetchAppointments();
-  }, []);
+  },[]);
 
   const hasUpcoming = upcomingAppointments.length > 0;
   return (
