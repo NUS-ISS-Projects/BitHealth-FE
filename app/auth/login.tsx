@@ -1,17 +1,43 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import { auth } from "../firebase"; // Adjust the path if necessary
 import colors from "../theme/colors";
 
-const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const ROUTES = {
   doctor: "/doctor/dashboard",
   patient: "/patient",
 };
+
+
+// Store data securely
+const storeData = async (key: string, value: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    localStorage.setItem(key, value);
+  } else {
+    // Use expo-secure-store for mobile
+    await SecureStore.setItemAsync(key, value);
+  }
+};
+
+// Retrieve data securely
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
+
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,41 +45,46 @@ const LoginScreen = () => {
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-
-
+  
   // Handle Email/Password Login
   const handleLogin = async () => {
     setLoading(true);
     try {
-      let emailToUse = email;
 
-      // Check if the input is a username (not an email)
-      if (!email.includes("@")) {
-        emailToUse = await getUsernameEmail(email); // Fetch email from Firestore
-      }
+
 
       // Perform Firebase authentication
-      const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      const idToken = await user.getIdToken();
       console.log("Logged in user:", user);
 
-      // Redirect based on user type
-      router.push({
-        pathname: ROUTES[userType] , // Fallback to a default route
-        params: { userData: JSON.stringify(user) }, // Pass user data as query parameters
-      });
+       // Store the token securely
+       storeData("authToken", idToken);
+     
+
+      // Redirect based on user type and pass userData
+      redirectToRoute(userType);
     } catch (error) {
-      Alert.alert("Error", "Invalid username/email or password.");
-      console.error("Login Error:", error.message);
+      Alert.alert("Error", error.message || "Invalid username/email or password.");
+      console.error("Login Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Redirect to the appropriate route based on user type
+  const redirectToRoute = (userType: string | number | string[]) => {
+
+    router.push({
+      pathname: ROUTES[userType],
+       // Pass userData as a stringified JSON object
+    });
+  };
+
   return (
-    <ScrollView
-      contentContainerStyle={styles.container} // Apply layout styles here
-    >
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerContainer}>
         <Text variant="headlineMedium" style={styles.welcomeText}>
           Welcome Back!
@@ -119,10 +150,10 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1, // Ensure the content expands to fill the available space
+    flexGrow: 1,
     backgroundColor: "#FFFFFF",
     padding: 20,
-    justifyContent: "center", // Center content vertically
+    justifyContent: "center",
   },
   headerContainer: {
     alignItems: "center",
@@ -168,10 +199,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },

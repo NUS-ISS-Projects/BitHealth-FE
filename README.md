@@ -17,6 +17,7 @@ Welcome to the BitHealth app! This Expo project uses file-based routing to simpl
    ```env
    EXPO_PUBLIC_API_URL=https://your-api-url.com
    ```
+   Get firebase.js and place it in app directory
 
 3. **Start the App:**
 
