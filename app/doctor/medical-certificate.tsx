@@ -142,8 +142,8 @@ export default function MedicalCertificateScreen() {
   }, [appointmentId]);
 
   const handleSaveCertificate = async () => {
-    const formattedEffectFrom = issueDate
-      ? formatDateForSaving(issueDate.toISOString())
+    const formattedEffectFrom = effectiveDate
+      ? formatDateForSaving(effectiveDate.toISOString())
       : "";
     const formattedIssueDate = issueDate
       ? formatDateForSaving(issueDate.toISOString())

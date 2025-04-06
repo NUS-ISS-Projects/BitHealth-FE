@@ -40,7 +40,7 @@ const PrescriptionScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp<any>>();
 
   const handleDiagnosis = () => {
-    navigation.navigate("PatientDiagnosis", { appointmentId });
+    navigation.navigate("PatientDiagnosis", { appointmentId, appointmentDate });
   };
 
   const handleMedicalCertificate = () => {
