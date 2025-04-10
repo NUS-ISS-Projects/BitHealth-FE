@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Avatar, Button, Card, Text } from "react-native-paper";
 import colors from "../theme/colors";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import { getAvatarSource } from "../../helper/avatarGenerator";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -24,10 +26,8 @@ export default function PatientHome() {
   const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
 
-
   useEffect(() => {
     async function fetchAppointments() {
-      
       try {
         const token = await getData("authToken");
         if (!token) {
@@ -71,7 +71,7 @@ export default function PatientHome() {
       }
     }
     fetchAppointments();
-  },[]);
+  }, []);
 
   const hasUpcoming = upcomingAppointments.length > 0;
   return (
