@@ -119,9 +119,20 @@ const LoginScreen = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.backButtonContainer}>
+        <IconButton
+          icon='arrow-left'
+          iconColor={colors.primary}
+          size={24}
+          onPress={() => router.back()}
+        />
+      </View>
       <View style={styles.headerContainer}>
         <Text variant='headlineMedium' style={styles.welcomeText}>
           Welcome Back!
+        </Text>
+        <Text variant='titleMedium' style={styles.subtitleText}>
+          Login as {userType === "doctor" ? "Doctor" : "Patient"}
         </Text>
       </View>
 
@@ -193,10 +204,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 60,
   },
+  headerImage: {
+    width: "100%",
+    height: 200,
+    marginBottom: 20,
+  },
   welcomeText: {
     color: colors.primary,
     fontWeight: "bold",
     marginBottom: 10,
+  },
+  subtitleText: {
+    color: colors.textSecondary,
+    marginBottom: 15,
   },
   input: {
     marginBottom: 15,
@@ -244,5 +264,9 @@ const styles = StyleSheet.create({
   registerLink: {
     color: colors.primary,
     fontWeight: "bold",
+  },
+  backButtonContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
   },
 });
