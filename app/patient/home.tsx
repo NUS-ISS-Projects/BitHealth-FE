@@ -4,9 +4,9 @@ import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Avatar, Button, Card, Text } from "react-native-paper";
-import colors from "../theme/colors";
-import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
 import { getAvatarSource } from "../../helper/avatarGenerator";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import colors from "../theme/colors";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -36,24 +36,28 @@ export default function PatientHome() {
         }
 
         // Fetch patient profile
-        const profileResponse = await axios.get(
-          `${API_URL}/api/users/profile`,
+        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      
+        const { userId,name } = profileResponse.data; // Extract userId
+        console.log("User ID:", userId);
+        console.log("User Name:", name);
+        setUserName(name);
+      
+        // Fetch appointments
+        const appointmentsResponse = await axios.get(
+          `${API_URL}/api/appointments/patient/${userId}`, // URL
           {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: `Bearer ${token}`, // Include the token in the Authorization header
             },
           }
         );
-
-        const { userId } = profileResponse.data; // Extract userId
-        console.log("User ID:", userId);
-
-        // Fetch appointments
-        const appointmentsResponse = await axios.get(
-          `${API_URL}/api/appointments/patient/${userId}`
-        );
         const data = appointmentsResponse.data;
-
+      
         setUserName(data[0].patient.user.name);
         const upcoming = data.filter(
           (apt: { status: string }) =>
