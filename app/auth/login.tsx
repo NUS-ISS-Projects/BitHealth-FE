@@ -15,12 +15,7 @@ import {
 } from "react-native";
 import { Button, IconButton, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
-
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-const ROUTES = {
-  doctor: "/doctor/dashboard",
-  patient: "/patient",
-};
 
 // Store data securely
 const storeData = async (key: string, value: string) => {
@@ -33,21 +28,11 @@ const storeData = async (key: string, value: string) => {
   }
 };
 
-// Retrieve data securely
-const getData = async (key: string) => {
-  if (Platform.OS === "web") {
-    // Use localStorage for web
-    return localStorage.getItem(key);
-  } else {
-    // Use expo-secure-store for mobile
-    return await SecureStore.getItemAsync(key);
-  }
-};
-
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
@@ -64,27 +49,48 @@ const LoginScreen = () => {
       const user = userCredential.user;
 
       const idToken = await user.getIdToken();
-      console.log("Logged in user:", user);
-
       // Store the token securely
       storeData("authToken", idToken);
 
-      // Redirect based on user type and pass userData
-      redirectToRoute(userType);
+      // Validate user role for interface
+      const response = await fetch(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      // Check role from localUser
+      const localUser = await response.json();
+      if (userType === "doctor" && localUser.role !== "DOCTOR") {
+        if (Platform.OS === "web") {
+          window.alert("Access Denied! This account is not a doctor account.");
+        } else {
+          Alert.alert("Access Denied", "This account is not a doctor account.");
+        }
+        setLoading(false);
+        return;
+      } else if (userType === "patient" && localUser.role !== "PATIENT") {
+        if (Platform.OS === "web") {
+          window.alert("Access Denied! This account is not a patient account.");
+        } else {
+          Alert.alert(
+            "Access Denied",
+            "This account is not a patient account."
+          );
+        }
+        setLoading(false);
+        return;
+      }
+      const destination =
+        userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
+      router.replace(destination);
     } catch (error) {
-      // Handle login errors
-      Alert.alert("Login Error", "Invalid email or password.");
+      if (Platform.OS === "web") {
+        window.alert("Login Error: Invalid email or password.");
+      } else {
+        Alert.alert("Login Error", "Invalid email or password.");
+      }
       console.error("Login Error:", error);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Redirect to the appropriate route based on user type
-  const redirectToRoute = (userType: string | number | string[]) => {
-    router.push({
-      pathname: ROUTES[userType],
-    });
   };
 
   return (
@@ -117,21 +123,42 @@ const LoginScreen = () => {
 
       {/* Login Form */}
       <TextInput
-        label='Username or Email'
+        label='Email'
         mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Password'
         mode='outlined'
-        secureTextEntry
+        secureTextEntry={!isPasswordVisible}
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={
+          <TextInput.Icon
+            icon={isPasswordVisible ? "eye" : "eye-off"}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          />
+        }
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
 
       <Button
         mode='contained'
@@ -199,6 +226,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 15,
+    backgroundColor: "#FFFFFF",
   },
   loginButton: {
     backgroundColor: colors.primary,
@@ -247,5 +275,11 @@ const styles = StyleSheet.create({
   backButtonContainer: {
     alignSelf: "flex-start",
     marginBottom: 10,
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    textAlign: "right",
+    marginBottom: 15,
+    fontWeight: "bold",
   },
 });
