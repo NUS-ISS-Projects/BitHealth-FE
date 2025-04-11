@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Button, Text, TextInput, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
+import { auth } from "../../firebaseConfig";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const ROUTES = {
