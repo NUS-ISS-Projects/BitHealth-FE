@@ -83,14 +83,22 @@ export default function PatientHome() {
           },
         });
       
-        const { userId } = profileResponse.data; // Extract userId
+        const { userId,name } = profileResponse.data; // Extract userId
         console.log("User ID:", userId);
+        console.log("User Name:", name);
+        setUserName(name);
       
         // Fetch appointments
         const appointmentsResponse = await axios.get(
-          `${API_URL}/api/appointments/patient/${userId}`
+          `${API_URL}/api/appointments/patient/${userId}`, // URL
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+            },
+          }
         );
         const data = appointmentsResponse.data;
+        console.log("Appointment Data:", data); // Extract the response data
       
         setUserName(data[0].patient.user.name);
         const upcoming = data.filter(
