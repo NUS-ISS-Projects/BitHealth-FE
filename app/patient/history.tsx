@@ -6,47 +6,8 @@ import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import axios from "axios";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-const formatDate = (date: string) => {
-  const [year, month, day] = date.split("-");
-  const map = {
-    "01": "Jan",
-    "02": "Feb",
-    "03": "Mar",
-    "04": "Apr",
-    "05": "May",
-    "06": "Jun",
-    "07": "Jul",
-    "08": "Aug",
-    "09": "Sep",
-    "10": "Oct",
-    "11": "Nov",
-    "12": "Dec",
-  };
-  return `${day} ${map[month as keyof typeof map]} ${year}`;
-};
-
-const getBadgeStyle = (status: string) => {
-  // Customize these colors based on your theme or preferences.
-  switch (status.toLowerCase()) {
-    case "completed":
-      return { backgroundColor: "green" };
-    case "cancelled":
-      return { backgroundColor: "red" };
-    case "pending":
-      return { backgroundColor: "grey" };
-    default:
-      return { backgroundColor: "orange" };
-  }
-};
-
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? "pm" : "am";
-  const formattedHour = hour % 12 || 12;
-  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
-};
+import { formatDate, formatTime } from "@/helper/dateTimeFormatter";
+import { getStatusColor } from "@/helper/statusColor";
 
 export default function History() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -108,7 +69,10 @@ export default function History() {
                 </View>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   <Badge
-                    style={[styles.badge, getBadgeStyle(consultation.status)]}
+                    style={[
+                      styles.badge,
+                      { backgroundColor: getStatusColor(consultation.status) },
+                    ]}
                   >
                     {consultation.status}
                   </Badge>

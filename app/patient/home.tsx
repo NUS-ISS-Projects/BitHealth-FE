@@ -4,6 +4,8 @@ import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Avatar, Button, Card, Text } from "react-native-paper";
+import { getAvatarSource } from "../../helper/avatarGenerator";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
 import colors from "../theme/colors";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -17,47 +19,6 @@ const getData = async (key: string) => {
     return await SecureStore.getItemAsync(key);
   }
 };
-const getAvatarSource = (doctor: {
-  name: string;
-  id?: number;
-  image?: any;
-}) => {
-  if (doctor.image) {
-    return doctor.image;
-  }
-  // Use name as seed if no ID is available
-  const seed = doctor.id;
-  return { uri: `https://i.pravatar.cc/50?img=${seed}` };
-};
-
-const formatDate = (date: string) => {
-  const [year, month, day] = date.split("-");
-  const map = {
-    "01": "Jan",
-    "02": "Feb",
-    "03": "Mar",
-    "04": "Apr",
-    "05": "May",
-    "06": "Jun",
-    "07": "Jul",
-    "08": "Aug",
-    "09": "Sep",
-    "10": "Oct",
-    "11": "Nov",
-    "12": "Dec",
-  };
-  return `${day} ${map[month as keyof typeof map]} ${year}`;
-};
-
-const formatTime = (time: string) => {
-  const [hours, minutes] = time.split(":");
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? "pm" : "am";
-  const formattedHour = hour % 12 || 12;
-  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
-};
-
-
 
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -65,17 +26,15 @@ export default function PatientHome() {
   const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
 
-
   useEffect(() => {
     async function fetchAppointments() {
-      
       try {
         const token = await getData("authToken");
         if (!token) {
           console.error("No authentication token found.");
           return;
         }
-      
+
         // Fetch patient profile
         const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
           headers: {
@@ -98,16 +57,17 @@ export default function PatientHome() {
           }
         );
         const data = appointmentsResponse.data;
-        console.log("Appointment Data:", data); // Extract the response data
       
         setUserName(data[0].patient.user.name);
         const upcoming = data.filter(
-          (apt: { status: string; }) => apt.status === "PENDING" || apt.status === "CONFIRMED"
+          (apt: { status: string }) =>
+            apt.status === "PENDING" || apt.status === "CONFIRMED"
         );
         const recent = data.filter(
-          (apt: { status: string; }) => apt.status !== "PENDING" && apt.status !== "CONFIRMED"
+          (apt: { status: string }) =>
+            apt.status !== "PENDING" && apt.status !== "CONFIRMED"
         );
-      
+
         setUpcomingAppointments(upcoming);
         setRecentAppointments(recent);
       } catch (error) {
@@ -115,7 +75,7 @@ export default function PatientHome() {
       }
     }
     fetchAppointments();
-  },[]);
+  }, []);
 
   const hasUpcoming = upcomingAppointments.length > 0;
   return (

@@ -3,9 +3,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
-import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
-import { auth } from "../firebase"; // Adjust the path if necessary
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  View,
+} from "react-native";
+import { Button, Text, TextInput, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -13,7 +20,6 @@ const ROUTES = {
   doctor: "/doctor/dashboard",
   patient: "/patient",
 };
-
 
 // Store data securely
 const storeData = async (key: string, value: string) => {
@@ -37,7 +43,6 @@ const getData = async (key: string) => {
   }
 };
 
-
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,72 +50,90 @@ const LoginScreen = () => {
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-  
   // Handle Email/Password Login
   const handleLogin = async () => {
     setLoading(true);
     try {
-
-
-
       // Perform Firebase authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
       const user = userCredential.user;
 
       const idToken = await user.getIdToken();
       console.log("Logged in user:", user);
 
-       // Store the token securely
-       storeData("authToken", idToken);
-     
+      // Store the token securely
+      storeData("authToken", idToken);
 
-      // Redirect based on user type and pass userData
-      redirectToRoute(userType);
+      // // Redirect based on user type and pass userData
+      // redirectToRoute(userType);
     } catch (error) {
-      Alert.alert("Error", error.message || "Invalid username/email or password.");
+      // Handle login errors
+      Alert.alert("Login Error", "Invalid email or password.");
       console.error("Login Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Redirect to the appropriate route based on user type
-  const redirectToRoute = (userType: string | number | string[]) => {
-
-    router.push({
-      pathname: ROUTES[userType],
-       // Pass userData as a stringified JSON object
-    });
-  };
+  // // Redirect to the appropriate route based on user type
+  // const redirectToRoute = (userType: string | number | string[]) => {
+  //   router.push({
+  //     pathname: ROUTES[userType],
+  //   });
+  // };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.backButtonContainer}>
+        <IconButton
+          icon='arrow-left'
+          iconColor={colors.primary}
+          size={24}
+          onPress={() => router.back()}
+        />
+      </View>
       <View style={styles.headerContainer}>
-        <Text variant="headlineMedium" style={styles.welcomeText}>
+        <Image
+          source={
+            userType === "doctor"
+              ? require("../../assets/images/doctor-login.jpg") // Image for doctor
+              : require("../../assets/images/patient-login.jpg") // Image for patient
+          }
+          style={styles.headerImage}
+          resizeMode='contain'
+        />
+        <Text variant='headlineMedium' style={styles.welcomeText}>
           Welcome Back!
+        </Text>
+        <Text variant='titleMedium' style={styles.subtitleText}>
+          Login as {userType === "doctor" ? "Doctor" : "Patient"}
         </Text>
       </View>
 
       {/* Login Form */}
       <TextInput
-        label="Username or Email"
-        mode="outlined"
+        label='Username or Email'
+        mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
       />
       <TextInput
-        label="Password"
-        mode="outlined"
+        label='Password'
+        mode='outlined'
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon="eye" />}
+        right={<TextInput.Icon icon='eye' />}
       />
 
       <Button
-        mode="contained"
+        mode='contained'
         style={styles.loginButton}
         labelStyle={styles.loginButtonText}
         onPress={handleLogin}
@@ -123,7 +146,7 @@ const LoginScreen = () => {
       <Text style={styles.orText}>Or, login with</Text>
       <View style={styles.socialContainer}>
         <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name="google" size={24} color="#DB4437" />
+          <FontAwesome name='google' size={24} color='#DB4437' />
         </TouchableOpacity>
       </View>
 
@@ -159,10 +182,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 60,
   },
+  headerImage: {
+    width: "100%",
+    height: 200,
+    marginBottom: 20,
+  },
   welcomeText: {
     color: colors.primary,
     fontWeight: "bold",
     marginBottom: 10,
+  },
+  subtitleText: {
+    color: colors.textSecondary,
+    marginBottom: 15,
   },
   input: {
     marginBottom: 15,
@@ -210,5 +242,9 @@ const styles = StyleSheet.create({
   registerLink: {
     color: colors.primary,
     fontWeight: "bold",
+  },
+  backButtonContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
   },
 });

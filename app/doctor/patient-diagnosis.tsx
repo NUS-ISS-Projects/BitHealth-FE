@@ -1,41 +1,59 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
+import { Text, TextInput, Button, Card, IconButton } from "react-native-paper";
 import {
-  Text,
-  TextInput,
-  Button,
-  Card,
-  IconButton,
-  Chip,
-} from "react-native-paper";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 import colors from "../theme/colors";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import axios from "axios";
 
-const formFields = [
-  { label: "Date of Visit", field: "dateOfVisit" },
-  { label: "MC No.", field: "mcNo" },
-  { label: "Name", field: "name" },
-  { label: "No. of Days", field: "noOfDays" },
-  { label: "With Effect From", field: "effectiveFrom" },
-];
+type AppointmentParams = {
+  appointmentId?: string;
+};
 
 export default function PatientDiagnosisScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
-
-  const [formData, setFormData] = useState({
-    dateOfVisit: "",
-    mcNo: "",
-    name: "",
-    noOfDays: "",
-    effectiveFrom: "",
-  });
   const [diagnosis, setDiagnosis] = useState("");
   const [action, setAction] = useState("");
 
-  const handleSave = () => {
-    // Add save logic here
-    navigation.goBack();
+  const route = useRoute();
+  const { appointmentId } = route.params as AppointmentParams;
+
+  const handleSave = async () => {
+    const data = {
+      diagnosis: diagnosis,
+      diagnosisAction: action,
+    };
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/appointments/diagnosis/${appointmentId}`,
+        data
+      );
+      if (response.status === 200) {
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error("Error saving diagnosis:", error);
+    }
   };
+
+  useEffect(() => {
+    const fetchDiagnosis = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/appointments/diagnosis/${appointmentId}`
+        );
+        setDiagnosis(response.data.diagnosis);
+        setAction(response.data.diagnosisAction);
+      } catch (error) {
+        console.error("Error fetching diagnosis:", error);
+      }
+    };
+    fetchDiagnosis();
+  }, [appointmentId]);
 
   return (
     <ScrollView style={styles.container}>
@@ -48,7 +66,9 @@ export default function PatientDiagnosisScreen() {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Enter Patient Diagnosis</Text>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text style={styles.headerBar}>Enter Patient Diagnosis</Text>
+        </View>
       </View>
       <View style={styles.contentContainer}>
         <Card style={styles.card}>
@@ -57,6 +77,7 @@ export default function PatientDiagnosisScreen() {
               Please provide a diagnosis of the patient's condition
             </Text>
             <TextInput
+              textColor='black'
               value={diagnosis}
               onChangeText={setDiagnosis}
               mode='outlined'
@@ -75,6 +96,7 @@ export default function PatientDiagnosisScreen() {
             <TextInput
               value={action}
               onChangeText={setAction}
+              textColor='black'
               mode='outlined'
               multiline
               numberOfLines={8}
@@ -117,7 +139,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "regular",
     color: colors.primary,
-    paddingLeft: 40,
   },
   contentContainer: {
     paddingBottom: 40,

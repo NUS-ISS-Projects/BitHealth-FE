@@ -1,5 +1,12 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Alert,
+  Platform,
+} from "react-native";
 import {
   Text,
   TextInput,
@@ -8,15 +15,53 @@ import {
   IconButton,
   Chip,
 } from "react-native-paper";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 import colors from "../theme/colors";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import axios from "axios";
+import {
+  formatDateForDisplay,
+  formatDateForSaving,
+  formatLastVerified,
+} from "../../helper/dateTimeFormatter";
+import {
+  DatePickerModal,
+  en,
+  registerTranslation,
+} from "react-native-paper-dates";
+
+type AppointmentParams = {
+  appointmentId?: string;
+  appointmentDate?: string;
+};
+
+registerTranslation("en", en);
 
 export default function PrescriptionDetailsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const route = useRoute();
+  const { appointmentId, appointmentDate } = route.params as AppointmentParams;
+  const year = appointmentDate
+    ? new Date(appointmentDate).getFullYear()
+    : new Date().getFullYear();
+  const autoInvoiceNo = appointmentId ? `INV-${year}-${appointmentId}` : "";
 
-  // Invoice fields remain single values
-  const [invoiceNo, setInvoiceNo] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState("");
+  // Prescription state holds the entire prescription response
+  const [prescription, setPrescription] = useState<any>(null);
+  const [invoiceDate, setInvoiceDate] = useState<Date | null>(null);
+  const [showInvoiceDatePicker, setShowInvoiceDatePicker] = useState(false);
+
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === "web") {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
 
   // List of medicine items
   const [medicines, setMedicines] = useState<
@@ -29,16 +74,10 @@ export default function PrescriptionDetailsScreen() {
     }[]
   >([{ medicineName: "", purpose: "", dosage: "", duration: "", notes: "" }]);
 
-  // Status state and last updated timestamp
-  const [status, setStatus] = useState("Pending");
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  // Update invoice fields
-  const handleInvoiceChange =
-    (field: "invoiceNo" | "invoiceDate") => (value: string) => {
-      if (field === "invoiceNo") setInvoiceNo(value);
-      else setInvoiceDate(value);
-    };
+  const onInvoiceDateConfirm = (params: any) => {
+    setShowInvoiceDatePicker(false);
+    setInvoiceDate(params.date);
+  };
 
   // Update a medicine item at a given index
   const handleMedicineChange =
@@ -62,7 +101,6 @@ export default function PrescriptionDetailsScreen() {
 
   // Remove a medicine item from the list by index
   const handleRemoveMedicine = (index: number) => {
-    // Ensure at least one medicine item remains
     if (medicines.length > 1) {
       const newMedicines = medicines.filter((_, idx) => idx !== index);
       setMedicines(newMedicines);
@@ -70,9 +108,93 @@ export default function PrescriptionDetailsScreen() {
   };
 
   // Approve action
-  const handleApprove = () => {
-    setStatus("Approved");
-    setLastUpdated(new Date());
+  const handleApprove = async () => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/prescriptions/verify/${prescription.prescriptionId}`,
+        {
+          lastVerified: new Date().toLocaleString(),
+        }
+      );
+      if (response.status === 200) {
+        setPrescription({
+          ...prescription,
+          lastVerified: response.data.lastVerified,
+        });
+        showAlert("Success", "MC verified successfully.");
+        fetchPrescription();
+      }
+    } catch (error) {
+      console.error("Failed to verify certificate:", error);
+      showAlert("Error", "Failed to verify MC.");
+    }
+  };
+
+  const fetchPrescription = async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/prescriptions/appointment/${appointmentId}`
+      );
+      setPrescription(response.data);
+      if (response.data.invoiceDate) {
+        setInvoiceDate(new Date(response.data.invoiceDate));
+      }
+      if (response.data.medicineList && response.data.medicineList.length > 0) {
+        setMedicines(response.data.medicineList);
+      }
+    } catch (error) {
+      console.error("Failed to fetch medical certificate:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (appointmentId) {
+      fetchPrescription();
+    }
+  }, [appointmentId]);
+
+  const handleSavePresciption = async () => {
+    const formattedInvoiceDate = invoiceDate
+      ? formatDateForSaving(invoiceDate.toISOString())
+      : "";
+    if (prescription) {
+      // Update presciption
+      try {
+        const response = await axios.put(
+          `${API_URL}/api/prescriptions/${prescription.prescriptionId}`,
+          {
+            invoiceDate: formattedInvoiceDate,
+            medicineList: medicines,
+          }
+        );
+        if (response.status === 200) {
+          setPrescription(response.data);
+          console.log("Prescription updated.");
+          showAlert("Success", "Prescription updated successfully.");
+          fetchPrescription();
+        }
+      } catch (error) {
+        console.error("Failed to update prescription:", error);
+      }
+    } else {
+      // Create new prescription
+      try {
+        const response = await axios.post(`${API_URL}/api/prescriptions`, {
+          appointmentId,
+          invoiceNo: autoInvoiceNo,
+          invoiceDate: formattedInvoiceDate,
+          medicineList: medicines,
+        });
+        if (response.status === 200 || response.status === 201) {
+          setPrescription(response.data);
+          showAlert("Success", "Prescription created successfully.");
+          console.log("Prescription created.");
+          fetchPrescription();
+        }
+      } catch (error) {
+        console.error("Failed to create prescription:", error);
+      }
+    }
   };
 
   return (
@@ -87,27 +209,45 @@ export default function PrescriptionDetailsScreen() {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>Enter Prescription Details</Text>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          <Text style={styles.headerBar}>Enter Prescription Details</Text>
+        </View>
       </View>
 
       <Card style={styles.card}>
         <Card.Content>
           {/* Invoice Fields */}
+          <Text style={styles.fieldsHeader}>Invoice No.</Text>
           <TextInput
-            label='Invoice No.'
-            mode='outlined'
-            value={invoiceNo}
-            onChangeText={handleInvoiceChange("invoiceNo")}
-            style={styles.input}
-            theme={{ colors: { primary: colors.primary } }}
+            disabled
+            textColor='black'
+            value={autoInvoiceNo}
+            style={[styles.input, { backgroundColor: "#F0F0F0" }]}
+            theme={{ colors: { primary: "white" } }}
           />
-          <TextInput
-            label='Invoice Date'
-            mode='outlined'
-            value={invoiceDate}
-            onChangeText={handleInvoiceChange("invoiceDate")}
-            style={styles.input}
-            theme={{ colors: { primary: colors.primary } }}
+          <Text style={styles.fieldsHeader}>Invoice Date</Text>
+          <TouchableOpacity onPress={() => setShowInvoiceDatePicker(true)}>
+            <TextInput
+              placeholder='Select Invoice Date'
+              mode='outlined'
+              value={
+                invoiceDate
+                  ? formatDateForDisplay(invoiceDate.toISOString())
+                  : ""
+              }
+              style={styles.input}
+              theme={{ colors: { primary: "white" } }}
+              editable={false}
+              pointerEvents='none'
+            />
+          </TouchableOpacity>
+          <DatePickerModal
+            locale='en'
+            mode='single'
+            visible={showInvoiceDatePicker}
+            onDismiss={() => setShowInvoiceDatePicker(false)}
+            date={invoiceDate || new Date()}
+            onConfirm={onInvoiceDateConfirm}
           />
 
           {/* Render Medicine Items */}
@@ -126,52 +266,52 @@ export default function PrescriptionDetailsScreen() {
                   />
                 )}
               </View>
+              <Text style={styles.fieldsHeader}>Medicine Name</Text>
               <TextInput
-                label='Medicine Name'
                 placeholder='e.g. Paracetamol'
                 mode='outlined'
                 value={medicine.medicineName}
                 onChangeText={handleMedicineChange(index, "medicineName")}
                 style={styles.input}
-                theme={{ colors: { primary: colors.primary } }}
+                theme={{ colors: { primary: "white" } }}
               />
+              <Text style={styles.fieldsHeader}>Purpose</Text>
               <TextInput
-                label='Purpose'
                 placeholder='e.g. For fever'
                 mode='outlined'
                 value={medicine.purpose}
                 onChangeText={handleMedicineChange(index, "purpose")}
                 style={styles.input}
-                theme={{ colors: { primary: colors.primary } }}
+                theme={{ colors: { primary: "white" } }}
               />
+              <Text style={styles.fieldsHeader}>Dosage</Text>
               <TextInput
-                label='Dosage'
                 placeholder='e.g. Twice Daily'
                 mode='outlined'
                 value={medicine.dosage}
                 onChangeText={handleMedicineChange(index, "dosage")}
                 style={styles.input}
-                theme={{ colors: { primary: colors.primary } }}
+                theme={{ colors: { primary: "white" } }}
               />
+              <Text style={styles.fieldsHeader}>Duration</Text>
               <TextInput
-                label='Duration'
                 placeholder='e.g. 7 days'
                 mode='outlined'
                 value={medicine.duration}
                 onChangeText={handleMedicineChange(index, "duration")}
                 style={styles.input}
-                theme={{ colors: { primary: colors.primary } }}
+                theme={{ colors: { primary: "white" } }}
               />
+              <Text style={styles.fieldsHeader}>Notes</Text>
               <TextInput
-                label='Notes'
                 placeholder='e.g. After meals'
                 mode='outlined'
                 value={medicine.notes}
                 onChangeText={handleMedicineChange(index, "notes")}
-                style={styles.input}
                 multiline
                 numberOfLines={3}
-                theme={{ colors: { primary: colors.primary } }}
+                style={styles.input}
+                theme={{ colors: { primary: "white" } }}
               />
             </View>
           ))}
@@ -191,31 +331,43 @@ export default function PrescriptionDetailsScreen() {
               mode='flat'
               style={[
                 styles.statusChip,
-                status === "Approved"
+                prescription && prescription.isVerified
                   ? styles.approvedChip
                   : styles.pendingChip,
               ]}
               textStyle={styles.statusChipText}
             >
-              {status}
+              {prescription && prescription.isVerified ? "Approved" : "Pending"}
             </Chip>
-            {lastUpdated && (
+            {prescription && prescription.isVerified && (
               <Text style={styles.lastUpdatedText}>
-                Last Updated: {lastUpdated.toLocaleString()}
+                Last Updated:{" "}
+                {formatLastVerified(prescription.lastVerified.toLocaleString())}
               </Text>
             )}
           </View>
-
           <View style={styles.buttonContainer}>
             <Button
               mode='contained'
-              style={[styles.button, styles.approveButton]}
-              labelStyle={styles.buttonText}
-              onPress={handleApprove}
+              style={[styles.button, styles.updateButton]}
+              labelStyle={styles.updateButtonText}
+              onPress={handleSavePresciption}
             >
-              Approve
+              {prescription ? "Update prescription" : "Create Prescription"}
             </Button>
           </View>
+          {prescription && (
+            <View style={styles.buttonContainer}>
+              <Button
+                mode='contained'
+                style={[styles.button, styles.approveButton]}
+                labelStyle={styles.buttonText}
+                onPress={handleApprove}
+              >
+                Approve
+              </Button>
+            </View>
+          )}
         </Card.Content>
       </Card>
     </ScrollView>
@@ -237,7 +389,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "400",
     color: colors.primary,
-    paddingLeft: 35,
+  },
+  fieldsHeader: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: colors.primary,
+    marginBottom: 10,
+    marginTop: 10,
   },
   card: {
     padding: 15,
@@ -302,12 +460,24 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
+    marginBottom: 20,
   },
   button: {
     borderRadius: 50,
     paddingVertical: 10,
     flex: 1,
     marginRight: 10,
+  },
+  updateButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.accent,
+  },
+  updateButton: {
+    backgroundColor: "white",
+    marginRight: 0,
+    borderColor: colors.primary,
+    borderWidth: 1,
   },
   approveButton: {
     backgroundColor: colors.accent,

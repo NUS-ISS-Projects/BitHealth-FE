@@ -1,77 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { Text, Card, Avatar, Button, Divider } from "react-native-paper";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
-
-const mockConfirmedAppointments = [
-  {
-    id: 1,
-    patientName: "Ferdi Klakson",
-    date: "24 Feb 2025",
-    time: "10:00 AM",
-    reason: "General Checkup",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-  {
-    id: 2,
-    patientName: "Yuda Bukan Main",
-    date: "24 Feb 2025",
-    time: "11:30 AM",
-    reason: "Follow-up",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-];
-
-const mockPendingRequests = [
-  {
-    id: 3,
-    patientName: "Alicia Keys",
-    date: "24 Feb 2025",
-    time: "2:00 PM",
-    reason: "Skin Consultation",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-  {
-    id: 4,
-    patientName: "Bob Martin",
-    date: "24 Feb 2025",
-    time: "2:30 PM",
-    reason: "Medication Refill",
-    avatar: require("../../assets/images/favicon.png"),
-  },
-];
+import axios from "axios";
+import { formatTime, formatDate } from "../../helper/dateTimeFormatter";
+import { getAvatarSource } from "../../helper/avatarGenerator";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function DoctorDashboard() {
   const navigation = useNavigation<NavigationProp<any>>();
-  const [confirmedAppointments, setConfirmedAppointments] = useState(
-    mockConfirmedAppointments
-  );
-  const [pendingRequests, setPendingRequests] = useState(mockPendingRequests);
+  const [confirmedAppointments, setConfirmedAppointments] = useState<any[]>([]);
+  const [pendingAppointments, setPendingAppointments] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const currentRequest = pendingAppointments[currentIndex];
+  const [userName, setUserName] = useState("");
 
-  const currentRequest = pendingRequests[currentIndex];
+  const updateAppointmentStatus = async (requestId: any, newStatus: string) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/api/appointments/updateStatus/${requestId}`,
+        { status: newStatus }
+      );
 
-  const handleConfirm = (requestId: any) => {
-    const request = pendingRequests.find((r) => r.id === requestId);
-    if (request) {
-      setConfirmedAppointments([...confirmedAppointments, request]);
-      const newPending = pendingRequests.filter((r) => r.id !== requestId);
-      setPendingRequests(newPending);
-      if (currentIndex >= newPending.length) {
-        setCurrentIndex(0);
+      if (response.status === 200) {
+        const request = pendingAppointments.find(
+          (r: any) => r.id === requestId
+        );
+        if (request) {
+          setConfirmedAppointments([...confirmedAppointments, request]);
+          const newPending = pendingAppointments.filter(
+            (r: any) => r.id !== requestId
+          );
+          setPendingAppointments(newPending);
+          if (currentIndex >= newPending.length) {
+            setCurrentIndex(0);
+          }
+        }
+        await fetchAppointments();
       }
+    } catch (error) {
+      console.error("Failed to update appointment status:", error);
+    }
+  };
+  const fetchAppointments = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/appointments/doctor/2`);
+      const data = response.data;
+      setUserName(data[0].patient.user.name);
+      const pending = data.filter((apt: any) => apt.status === "PENDING");
+      const confirmed = data.filter((apt: any) => apt.status == "CONFIRMED");
+      setPendingAppointments(pending);
+      setConfirmedAppointments(confirmed);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
     }
   };
 
-  const handleReject = (requestId: any) => {
-    const newPending = pendingRequests.filter((r) => r.id !== requestId);
-    setPendingRequests(newPending);
-    if (currentIndex >= newPending.length) {
-      setCurrentIndex(0);
-    }
-  };
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   return (
     <ScrollView
@@ -81,12 +70,12 @@ export default function DoctorDashboard() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.welcomeTxt}>Welcome Back!</Text>
-        <Text style={styles.doctorName}>Dr. Budi Sound</Text>
+        <Text style={styles.doctorName}>Dr. {userName}</Text>
       </View>
 
       <Text style={styles.sectionTitle}>Pending Requests</Text>
       {/* Pending Appointment Requests */}
-      {pendingRequests.length === 0 || !currentRequest ? (
+      {pendingAppointments.length === 0 || !currentRequest ? (
         <Card style={styles.emptyCard}>
           <Card.Content>
             <Text style={styles.emptyText}>
@@ -102,32 +91,53 @@ export default function DoctorDashboard() {
               <View style={{ flexDirection: "row", paddingTop: 5 }}>
                 <FontAwesome name='clock-o' size={24} color='#FFFFFF' />
                 <Text style={styles.dateRangeValue}>
-                  {currentRequest.date},{" "}
+                  {formatDate(currentRequest.appointmentDate)},{" "}
                 </Text>
-                <Text style={styles.timeRangeValue}>{currentRequest.time}</Text>
+                <Text style={styles.timeRangeValue}>
+                  {formatTime(currentRequest.appointmentTime)}
+                </Text>
               </View>
             </View>
             <View style={styles.patientInfoContainer}>
-              <Avatar.Image size={50} source={currentRequest.avatar} />
+              <Avatar.Image
+                size={50}
+                source={getAvatarSource({
+                  id: currentRequest.patient.user.userId,
+                  image: "",
+                })}
+              />
               <View style={styles.infoContainer}>
                 <Text style={styles.patientName}>
-                  {currentRequest.patientName}
+                  {currentRequest.patient.user.name}
                 </Text>
-                <Text style={styles.reason}>{currentRequest.reason}</Text>
+                <Text style={styles.reason}>
+                  {currentRequest.reasonForVisit}
+                </Text>
               </View>
             </View>
             <View style={styles.buttonRow}>
               <Button
                 mode='contained'
                 style={[styles.confirmButton, { flex: 0.6 }]}
-                onPress={() => handleConfirm(currentRequest.id)}
+                onPress={() =>
+                  updateAppointmentStatus(
+                    currentRequest.appointmentId,
+                    "CONFIRMED"
+                  )
+                }
+                textColor='#FFFFFF'
               >
                 Accept
               </Button>
               <Button
                 mode='outlined'
                 style={[styles.rejectButton, { flex: 0.4 }]}
-                onPress={() => handleReject(currentRequest.id)}
+                onPress={() =>
+                  updateAppointmentStatus(
+                    currentRequest.appointmentId,
+                    "REJECTED"
+                  )
+                }
                 textColor='#123D1F'
               >
                 Decline
@@ -151,17 +161,27 @@ export default function DoctorDashboard() {
         </Card>
       ) : (
         confirmedAppointments.map((appointment) => (
-          <Card key={appointment.id} style={styles.appointmentCard}>
+          <Card key={appointment.appointmentId} style={styles.appointmentCard}>
             <Card.Content style={styles.cardContent}>
-              <Avatar.Image size={50} source={appointment.avatar} />
+              <Avatar.Image
+                size={50}
+                source={getAvatarSource({
+                  id: appointment.patient.user.userId,
+                  image: "",
+                })}
+              />
               <View style={styles.infoContainer}>
                 <Text style={styles.patientName}>
-                  {appointment.patientName}
+                  {appointment.patient.user.name}
                 </Text>
-                <Text style={styles.reason}>{appointment.reason}</Text>
+                <Text style={styles.reason}>{appointment.reasonForVisit}</Text>
                 <View style={{ flexDirection: "row" }}>
-                  <Text style={styles.date}>{appointment.date},</Text>
-                  <Text style={styles.time}>{appointment.time}</Text>
+                  <Text style={styles.date}>
+                    {formatDate(appointment.appointmentDate)},
+                  </Text>
+                  <Text style={styles.time}>
+                    {formatTime(appointment.appointmentTime)}
+                  </Text>
                 </View>
               </View>
               <Button
@@ -169,7 +189,13 @@ export default function DoctorDashboard() {
                 textColor='#123D1F'
                 onPress={() =>
                   navigation.navigate("Prescription", {
-                    appointmentId: appointment.id,
+                    appointmentId: appointment.appointmentId,
+                    userName: appointment.patient.user.name,
+                    patientUserId: appointment.patient.user.userId,
+                    appointmentDate: appointment.appointmentDate,
+                    appointmentTime: appointment.appointmentTime,
+                    comment: appointment.comment,
+                    reasonForVisit: appointment.reasonForVisit,
                   })
                 }
               >
