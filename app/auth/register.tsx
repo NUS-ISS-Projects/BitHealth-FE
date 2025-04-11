@@ -14,7 +14,7 @@ import { FontAwesome } from "@expo/vector-icons";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const RegisterScreen = () => {
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,12 +34,9 @@ const RegisterScreen = () => {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Validate fields
-      if (!username || !email || !password) {
+      if (!name || !email || !password) {
         throw new Error("Please fill in all fields.");
       }
-
-      // Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -51,7 +48,7 @@ const RegisterScreen = () => {
       const userData = {
         name: username || "No Name", // Use display name or fallback
         email: email,
-        role: "PATIENT", // or "DOCTOR" based on your app logic
+        role: userType === "doctor" ? "DOCTOR" : "PATIENT",
         firebaseUid: user.uid,
       };
 
@@ -132,12 +129,18 @@ const RegisterScreen = () => {
         </Text>
       </View>
       <TextInput
-        label='Username'
+        label='Name'
         mode='outlined'
-        value={username}
-        onChangeText={setUsername}
+        value={name}
+        onChangeText={setName}
         style={styles.input}
         autoCapitalize='none'
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Email ID'
@@ -147,15 +150,32 @@ const RegisterScreen = () => {
         style={styles.input}
         keyboardType='email-address'
         autoCapitalize='none'
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Password'
         mode='outlined'
-        secureTextEntry
+        secureTextEntry={!isPasswordVisible}
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={
+          <TextInput.Icon
+            icon={isPasswordVisible ? "eye" : "eye-off"}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          />
+        }
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <Button
         mode='contained'

@@ -14,6 +14,7 @@ import {
 import { Button, Text, TextInput } from "react-native-paper";
 import { auth } from "../firebase"; // Adjust the path if necessary
 import colors from "../theme/colors";
+import { auth } from "../../firebaseConfig";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const ROUTES = {
