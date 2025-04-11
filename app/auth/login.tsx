@@ -1,3 +1,4 @@
+import { auth } from "@/firebaseConfig";
 import { FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -5,14 +6,14 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Image,
   View,
 } from "react-native";
-import { Button, Text, TextInput, IconButton } from "react-native-paper";
+import { Button, IconButton, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -68,8 +69,8 @@ const LoginScreen = () => {
       // Store the token securely
       storeData("authToken", idToken);
 
-      // // Redirect based on user type and pass userData
-      // redirectToRoute(userType);
+      // Redirect based on user type and pass userData
+      redirectToRoute(userType);
     } catch (error) {
       // Handle login errors
       Alert.alert("Login Error", "Invalid email or password.");
@@ -79,12 +80,12 @@ const LoginScreen = () => {
     }
   };
 
-  // // Redirect to the appropriate route based on user type
-  // const redirectToRoute = (userType: string | number | string[]) => {
-  //   router.push({
-  //     pathname: ROUTES[userType],
-  //   });
-  // };
+  // Redirect to the appropriate route based on user type
+  const redirectToRoute = (userType: string | number | string[]) => {
+    router.push({
+      pathname: ROUTES[userType],
+    });
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

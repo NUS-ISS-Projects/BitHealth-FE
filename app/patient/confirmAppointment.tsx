@@ -1,20 +1,21 @@
-import React from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
 import {
-  Text,
-  Button,
-  Avatar,
-  Card,
-  Badge,
-  IconButton,
-} from "react-native-paper";
-import colors from "../theme/colors";
-import {
-  useNavigation,
   NavigationProp,
+  useNavigation,
   useRoute,
 } from "@react-navigation/native";
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  IconButton,
+  Text,
+} from "react-native-paper";
+import colors from "../theme/colors";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 type AppointmentParams = {
@@ -27,6 +28,16 @@ type AppointmentParams = {
   appointmentTime: string;
   isRescheduling: boolean;
   appointmentId?: string;
+};
+
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
 };
 
 export default function ConfirmAppointment() {
@@ -44,39 +55,103 @@ export default function ConfirmAppointment() {
     appointmentId,
   } = route.params as AppointmentParams;
 
-  const handleBooking = async () => {
-    if (isRescheduling) {
-      const rescheduleData = {
-        appointment_date: appointmentDate,
-        appointment_time: appointmentTime,
-      };
-      const response = await axios.put(
-        `${API_URL}/api/appointments/reschedule/${appointmentId}`,
-        rescheduleData
-      );
+  // State variables
+  const [token, setToken] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [patientId, setPatientId] = useState<number | null>(null);
 
-      if (response.status === 200) {
-        navigation.navigate("Confirmed", {
-          doctorName,
-          appointmentDate,
-          appointmentTime,
-          isRescheduling: true,
+  // Fetch token and user profile on component mount
+  useEffect(() => {
+    const fetchTokenAndProfile = async () => {
+      try {
+        const authToken = await getData("authToken");
+        if (!authToken) {
+          console.error("No authentication token found.");
+          return;
+        }
+        setToken(authToken);
+
+        // Fetch user profile
+        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
         });
+         // Extract userId
+        const { userId } = profileResponse.data; // Extract userId and patientId
+        setUserId(userId);
+
+        // Fetch patient profile
+        const patientProfileResponse = await axios.get(`${API_URL}/api/patients/profile/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        });
+
+        const { patientId } = patientProfileResponse.data;
+        setPatientId(patientId);
+        console.log("User ID:", userId);
+        console.log("Patient ID:", patientId);
+      } catch (error) {
+        console.error("Failed to fetch token or profile:", error);
       }
-    } else {
+    };
+
+    fetchTokenAndProfile();
+  }, []);
+
+  const handleBooking = async () => {
+    if (!token || !patientId) {
+      console.error("Missing token or patientId.");
+      return;
+    }
+
+    if (isRescheduling && appointmentId) {
+      try {
+        const rescheduleData = {
+          appointment_date: appointmentDate,
+          appointment_time: appointmentTime,
+        };
+        const response = await axios.put(
+          `${API_URL}/api/appointments/reschedule/${appointmentId}`,
+          rescheduleData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          navigation.navigate("Confirmed", {
+            doctorName,
+            appointmentDate,
+            appointmentTime,
+            isRescheduling: true,
+          });
+        }
+      } catch (error) {
+        console.error("Failed to reschedule appointment:", error);
+      }
+    } else if (doctorId && appointmentDate && appointmentTime) {
       try {
         const appointmentData = {
-          patientId: 1, // TODO: Get this from user context/auth
+          patientId: patientId,
           doctorId: doctorId,
           appointment_date: appointmentDate,
           appointment_time: appointmentTime,
           reason_for_visit: checkupType,
           comment: reason || "",
         };
-
+        console.log(appointmentData);
         const response = await axios.post(
           `${API_URL}/api/appointments`,
-          appointmentData
+          appointmentData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         if (response.status === 201 || response.status === 200) {
@@ -106,19 +181,28 @@ export default function ConfirmAppointment() {
     return `${day}-${month}-${year}`;
   };
 
+  if (!token || !userId || !patientId) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerBarContainer}>
         <IconButton
-          mode='contained'
-          icon='arrow-left'
-          iconColor='#123D1F'
-          containerColor='white'
+          mode="contained"
+          icon="arrow-left"
+          iconColor="#123D1F"
+          containerColor="white"
           size={18}
           onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>Confirm Date</Text>
       </View>
+
       {/* Header */}
       <View style={styles.headerContainer}>
         <View>
@@ -173,7 +257,7 @@ export default function ConfirmAppointment() {
 
       {/* Book Now Button */}
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.bookButton}
         labelStyle={styles.bookButtonText}
         onPress={handleBooking}
