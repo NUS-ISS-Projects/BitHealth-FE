@@ -15,7 +15,6 @@ import { Button, Text, TextInput } from "react-native-paper";
 import { auth } from "../firebase"; // Adjust the path if necessary
 import colors from "../theme/colors";
 import { auth } from "../../firebaseConfig";
-
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const ROUTES = {
   doctor: "/doctor/dashboard",
@@ -61,21 +60,11 @@ const storeData = async (key: string, value: string) => {
   }
 };
 
-// Retrieve data securely
-const getData = async (key: string) => {
-  if (Platform.OS === "web") {
-    // Use localStorage for web
-    return localStorage.getItem(key);
-  } else {
-    // Use expo-secure-store for mobile
-    return await SecureStore.getItemAsync(key);
-  }
-};
-
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
@@ -92,8 +81,6 @@ const LoginScreen = () => {
       const user = userCredential.user;
 
       const idToken = await user.getIdToken();
-      console.log("Logged in user:", user);
-
       // Store the token securely
       storeData("authToken", idToken);
 
@@ -139,21 +126,42 @@ const LoginScreen = () => {
 
       {/* Login Form */}
       <TextInput
-        label='Username or Email'
+        label='Email'
         mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Password'
         mode='outlined'
-        secureTextEntry
+        secureTextEntry={!isPasswordVisible}
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={
+          <TextInput.Icon
+            icon={isPasswordVisible ? "eye" : "eye-off"}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          />
+        }
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
 
       <Button
         mode='contained'
@@ -221,6 +229,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 15,
+    backgroundColor: "#FFFFFF",
   },
   loginButton: {
     backgroundColor: colors.primary,
@@ -269,5 +278,11 @@ const styles = StyleSheet.create({
   backButtonContainer: {
     alignSelf: "flex-start",
     marginBottom: 10,
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    textAlign: "right",
+    marginBottom: 15,
+    fontWeight: "bold",
   },
 });
