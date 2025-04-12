@@ -49,7 +49,7 @@ export default function PatientHome() {
       
         // Fetch appointments
         const appointmentsResponse = await axios.get(
-          `${API_URL}/api/appointments/patient/${userId}`, // URL
+          `${API_URL}/api/appointments/patient`, // URL
           {
             headers: {
               Authorization: `Bearer ${token}`, // Include the token in the Authorization header
