@@ -1,18 +1,18 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, Button, Avatar, Card, IconButton } from "react-native-paper";
 import {
+  NavigationProp,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { Avatar, Button, Card, IconButton, Text } from "react-native-paper";
+import {
+  DatePickerModal,
   enGB,
   registerTranslation,
-  DatePickerModal,
   TimePickerModal,
 } from "react-native-paper-dates";
 import colors from "../theme/colors";
-import {
-  useNavigation,
-  NavigationProp,
-  useRoute,
-} from "@react-navigation/native";
 
 type AppointmentParams = {
   doctorId: number;
@@ -90,8 +90,10 @@ export default function AppointmentDate() {
       navigation.navigate("ConfirmAppointment", {
         isRescheduling: true,
         appointmentId,
-        newDate: formattedDate,
-        newTime: formattedTime,
+        doctorName,
+        specialty,
+        appointmentDate: formattedDate,
+        appointmentTime: formattedTime,
       });
     } else {
       navigation.navigate("ConfirmAppointment", {

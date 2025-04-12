@@ -18,6 +18,7 @@ function DashboardStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name='DashboardMain' component={DoctorDashboard} />
+      <Stack.Screen name='Appointments' component={AppointmentsScreen} />
       <Stack.Screen name='Prescription' component={PrescriptionScreen} />
       <Stack.Screen
         name='PatientDiagnosis'

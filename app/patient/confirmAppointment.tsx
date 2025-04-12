@@ -9,10 +9,13 @@ import {
   IconButton,
 } from "react-native-paper";
 import colors from "../theme/colors";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import { useRoute } from "@react-navigation/native";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 import axios from "axios";
-import { API_URL } from "@env";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 type AppointmentParams = {
   doctorId: number;
@@ -43,12 +46,23 @@ export default function ConfirmAppointment() {
 
   const handleBooking = async () => {
     if (isRescheduling) {
-      navigation.navigate("Confirmed", {
-        appointmentId,
-        newDate: appointmentDate,
-        newTime: appointmentTime,
-        isRescheduling: true,
-      });
+      const rescheduleData = {
+        appointment_date: appointmentDate,
+        appointment_time: appointmentTime,
+      };
+      const response = await axios.put(
+        `${API_URL}/api/appointments/reschedule/${appointmentId}`,
+        rescheduleData
+      );
+
+      if (response.status === 200) {
+        navigation.navigate("Confirmed", {
+          doctorName,
+          appointmentDate,
+          appointmentTime,
+          isRescheduling: true,
+        });
+      }
     } else {
       try {
         const appointmentData = {

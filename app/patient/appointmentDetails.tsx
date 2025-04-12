@@ -1,4 +1,6 @@
 import React from "react";
+import axios from "axios";
+import { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import {
   Text,
@@ -12,12 +14,27 @@ import { useRouter } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { Alert } from "react-native";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface DetailRowProps {
   icon: keyof typeof FontAwesome.glyphMap;
   label: string;
   value: string;
 }
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(":");
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? "pm" : "am";
+  const formattedHour = hour % 12 || 12;
+  return `${formattedHour}:${minutes.slice(0, 2)} ${ampm}`;
+};
+
+const formatDate = (date: string) => {
+  const [year, month, day] = date.split("-");
+  return `${day}-${month}-${year}`;
+};
 
 export default function AppointmentDetails() {
   const router = useRouter();
@@ -34,17 +51,48 @@ export default function AppointmentDetails() {
     });
   };
 
-  const handleDelete = () => {
-    navigation.goBack();
+  const handleDelete = async () => {
+    Alert.alert(
+      "Cancel Appointment",
+      "Are you sure you want to cancel this appointment?",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await axios.put(
+                `${API_URL}/api/appointments/updateStatus/4`,
+                { status: "CANCELLED" }
+              );
+
+              if (response.status === 200) {
+                navigation.goBack();
+              }
+            } catch (error) {
+              console.error("Failed to cancel appointment:", error);
+              Alert.alert(
+                "Error",
+                "Failed to cancel appointment. Please try again."
+              );
+            }
+          },
+        },
+      ]
+    );
   };
 
   const appointment = {
     doctorName: "Dr. Budi Sound",
     specialty: "General Practitioner",
-    date: "2024-05-21",
-    time: "10:00 AM",
+    date: "2025-05-21",
+    time: "23:13",
     status: "Pending",
-    bookingId: "BH-2024-001",
+    bookingId: "6",
     image: require("../../assets/images/favicon.png"),
     reason: "I am down with a fever",
   };
@@ -103,8 +151,16 @@ export default function AppointmentDetails() {
               label='Appointment ID'
               value={appointment.bookingId}
             />
-            <DetailRow icon='calendar' label='Date' value={appointment.date} />
-            <DetailRow icon='clock-o' label='Time' value={appointment.time} />
+            <DetailRow
+              icon='calendar'
+              label='Date'
+              value={formatDate(appointment.date)}
+            />
+            <DetailRow
+              icon='clock-o'
+              label='Time'
+              value={formatTime(appointment.time)}
+            />
           </View>
           <Divider style={styles.divider} />
           <View style={styles.reasonSection}>

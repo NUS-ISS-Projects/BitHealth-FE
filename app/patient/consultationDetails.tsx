@@ -2,7 +2,11 @@ import React, { useState } from "react";
 import { View, StyleSheet, Image, ScrollView } from "react-native";
 import { Text, Divider, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import {
+  useNavigation,
+  NavigationProp,
+  useRoute,
+} from "@react-navigation/native";
 import DiagnosisSection from "../components/diagnosisCard";
 import MedicalCertificate from "../components/mcCard";
 import MedicationSection from "../components/medicationCard";
@@ -22,9 +26,27 @@ const iconMapping: Record<string, string> = {
   [TabKey.RECEIPT]: "account-cash-outline",
 };
 
+type AppointmentParams = {
+  appointmentId?: string;
+  doctorName: string;
+  specialty: string;
+  reason?: string;
+  checkupType?: string;
+  appointmentDate: string;
+  appointmentTime: string;
+};
+
 export default function ConsultationDetails() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [selectedTab, setSelectedTab] = useState<TabKey>(TabKey.DIAGNOSIS);
+  const route = useRoute();
+  const {
+    appointmentId,
+    doctorName,
+    specialty,
+    appointmentDate,
+    appointmentTime,
+  } = route.params as AppointmentParams;
 
   const handleTabPress = (tab: TabKey) => {
     setSelectedTab(tab);
@@ -33,13 +55,29 @@ export default function ConsultationDetails() {
   const renderContent = () => {
     switch (selectedTab) {
       case TabKey.DIAGNOSIS:
-        return <DiagnosisSection />;
+        return (
+          <DiagnosisSection
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.MEDICATION:
-        return <MedicationSection />;
+        return (
+          <MedicationSection
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.MEDICAL_CERT:
-        return <MedicalCertificate />;
+        return (
+          <MedicalCertificate
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       case TabKey.RECEIPT:
-        return <Receipt />;
+        return (
+          <Receipt
+            appointmentId={appointmentId ? parseInt(appointmentId, 10) : 0}
+          />
+        );
       default:
         return null;
     }
@@ -47,7 +85,7 @@ export default function ConsultationDetails() {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Doctor & Patient Info */}
+      {/* Doctor Info */}
       <View style={styles.headerBarContainer}>
         <IconButton
           mode='contained'
@@ -57,7 +95,9 @@ export default function ConsultationDetails() {
           size={18}
           onPress={() => navigation.goBack()}
         />
-        <Text style={styles.headerBar}>17 Dec 2024 • 8:33 AM</Text>
+        <Text style={styles.headerBar}>
+          {appointmentDate} • {appointmentTime}
+        </Text>
       </View>
       <View style={styles.headerContainer}>
         <View style={styles.consultationInfo}>
@@ -66,11 +106,11 @@ export default function ConsultationDetails() {
             style={styles.doctorImage}
           />
           <View style={styles.doctorInfo}>
-            <Text style={styles.doctorName}>Dr Eugene Huang</Text>
-            <Text style={styles.consultationSpeciality}>
-              General Practitioner
+            <Text style={styles.doctorName}>{doctorName}</Text>
+            <Text style={styles.consultationSpeciality}>{specialty}</Text>
+            <Text style={styles.consultationID}>
+              Consultation #: {appointmentId}
             </Text>
-            <Text style={styles.consultationID}>Consultation #: 1</Text>
           </View>
         </View>
       </View>
@@ -138,7 +178,7 @@ const styles = StyleSheet.create({
   },
   doctorImage: {
     width: 80,
-    height: 80,
+    height: 50,
     borderRadius: 40,
   },
   doctorInfo: {
@@ -190,6 +230,8 @@ const styles = StyleSheet.create({
   },
   activeTabLabel: {
     fontSize: 12,
+    color: "#000000",
+    fontWeight: "bold",
   },
   inactiveTabLabel: {
     color: colors.textPrimary,

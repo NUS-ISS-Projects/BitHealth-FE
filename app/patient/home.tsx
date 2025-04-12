@@ -1,49 +1,82 @@
-import React from "react";
-import { View, Image, ScrollView, StyleSheet } from "react-native";
-import { Text, Button, Card, Avatar } from "react-native-paper";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Avatar, Button, Card, Text } from "react-native-paper";
 import colors from "../theme/colors";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import { getAvatarSource } from "../../helper/avatarGenerator";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const appointments = [
-  {
-    name: "Dr. Budi Sound",
-    reason: "Annual Checkup",
-    date: "21 May",
-    time: "10:00 AM",
-  },
-  {
-    name: "Dr. Anastasia",
-    reason: "Annual Checkup",
-    date: "17 May",
-    time: "10:00 AM",
-  },
-];
-
-const upcomingAppointments = [
-  {
-    name: "Dr. Eugene Huang",
-    reason: "General Checkup",
-    date: "24 May",
-    time: "10:00 AM",
-    status: "Upcoming",
-  },
-];
-
-const getAvatarSource = (doctor: {
-  name: string;
-  id?: number;
-  image?: any;
-}) => {
-  if (doctor.image) {
-    return doctor.image;
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
   }
-  // Use name as seed if no ID is available
-  const seed = doctor.id || doctor.name.length;
-  return { uri: `https://i.pravatar.cc/50?img=${seed}` };
 };
 
 export default function PatientHome() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [recentAppointments, setRecentAppointments] = useState<any[]>([]);
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    async function fetchAppointments() {
+      try {
+        const token = await getData("authToken");
+        if (!token) {
+          console.error("No authentication token found.");
+          return;
+        }
+
+        // Fetch patient profile
+        const profileResponse = await axios.get(
+          `${API_URL}/api/users/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const { userId } = profileResponse.data; // Extract userId
+        console.log("User ID:", userId);
+
+        // Fetch appointments
+        const appointmentsResponse = await axios.get(
+          `${API_URL}/api/appointments/patient/${userId}`, // URL
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+            },
+          }
+        );
+        const data = appointmentsResponse.data;
+
+        setUserName(data[0].patient.user.name);
+        const upcoming = data.filter(
+          (apt: { status: string }) =>
+            apt.status === "PENDING" || apt.status === "CONFIRMED"
+        );
+        const recent = data.filter(
+          (apt: { status: string }) =>
+            apt.status !== "PENDING" && apt.status !== "CONFIRMED"
+        );
+
+        setUpcomingAppointments(upcoming);
+        setRecentAppointments(recent);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+    fetchAppointments();
+  }, []);
+
   const hasUpcoming = upcomingAppointments.length > 0;
   return (
     <ScrollView style={styles.container}>
@@ -63,7 +96,7 @@ export default function PatientHome() {
             Hello,
           </Text>
           <Text variant='titleLarge' style={styles.userName}>
-            Jong Yann! 👋
+            {userName} 👋
           </Text>
         </View>
         {hasUpcoming ? (
@@ -87,18 +120,19 @@ export default function PatientHome() {
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
                       <Text variant='titleSmall' style={styles.doctorName}>
-                        {appointment.name}
+                        {appointment.doctor.user.name}
                       </Text>
                     </View>
                     <Text variant='bodySmall' style={styles.appointmentReason}>
-                      {appointment.reason}
+                      {appointment.reasonForVisit}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
                         variant='labelMedium'
                         style={styles.appointmentDate}
                       >
-                        {appointment.date}, {appointment.time}
+                        {formatDate(appointment.appointmentDate)},{" "}
+                        {formatTime(appointment.appointmentTime)}
                       </Text>
                     </View>
                   </View>
@@ -148,7 +182,7 @@ export default function PatientHome() {
           </Text>
         </View>
 
-        {appointments.map((appointment, index) => (
+        {recentAppointments.map((appointment, index) => (
           <Card
             key={index}
             style={styles.appointmentCard}
@@ -159,15 +193,18 @@ export default function PatientHome() {
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
                   <Text variant='titleSmall' style={styles.doctorName}>
-                    {appointment.name}
+                    {appointment.doctor.user.name}
                   </Text>
                 </View>
                 <Text variant='bodySmall' style={styles.appointmentReason}>
-                  {appointment.reason}
+                  {appointment.reasonForVisit}
                 </Text>
-                <Text variant='labelMedium' style={styles.appointmentDate}>
-                  {appointment.date}, {appointment.time}
-                </Text>
+                <View style={styles.timeContainer}>
+                  <Text variant='labelMedium' style={styles.appointmentDate}>
+                    {formatDate(appointment.appointmentDate)},{" "}
+                    {formatTime(appointment.appointmentTime)}
+                  </Text>
+                </View>
               </View>
             </Card.Content>
           </Card>

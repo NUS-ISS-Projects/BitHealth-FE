@@ -1,33 +1,121 @@
-import React, { useState } from "react";
-import { View, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from "react";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
+import { auth } from "../firebase"; // Adjust the path if necessary
+import colors from "../theme/colors";
+import { auth } from "../../firebaseConfig";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const ROUTES = {
+  doctor: "/doctor/dashboard",
+  patient: "/patient",
+};
+
+// Store data securely
+const storeData = async (key: string, value: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    localStorage.setItem(key, value);
+  } else {
+    // Use expo-secure-store for mobile
+    await SecureStore.setItemAsync(key, value);
+  }
+};
+
+// Retrieve data securely
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
+const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
+const ROUTES = {
+  doctor: "/doctor/dashboard",
+  patient: "/patient",
+};
+
+// Store data securely
+const storeData = async (key: string, value: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    localStorage.setItem(key, value);
+  } else {
+    // Use expo-secure-store for mobile
+    await SecureStore.setItemAsync(key, value);
+  }
+};
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-  // Handle Login
-  const handleLogin = () => {
-    router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+  // Handle Email/Password Login
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      // Perform Firebase authentication
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      const idToken = await user.getIdToken();
+      // Store the token securely
+      storeData("authToken", idToken);
+
+      // Redirect based on user type and pass userData
+      redirectToRoute(userType);
+    } catch (error) {
+      Alert.alert(
+        "Error",
+        error.message || "Invalid username/email or password."
+      );
+      console.error("Login Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Redirect to the appropriate route based on user type
+  const redirectToRoute = (userType: string | number | string[]) => {
+    router.push({
+      pathname: ROUTES[userType],
+      // Pass userData as a stringified JSON object
+    });
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Image
-          source={
-            userType === "doctor"
-              ? require("../../assets/images/doctor-login.jpg") // Image for doctor
-              : require("../../assets/images/patient-login.jpg") // Image for patient
-          }
-          style={styles.headerImage}
-          resizeMode='contain'
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.backButtonContainer}>
+        <IconButton
+          icon='arrow-left'
+          iconColor={colors.primary}
+          size={24}
+          onPress={() => router.back()}
         />
+      </View>
+      <View style={styles.headerContainer}>
         <Text variant='headlineMedium' style={styles.welcomeText}>
           Welcome Back!
         </Text>
@@ -38,23 +126,41 @@ const LoginScreen = () => {
 
       {/* Login Form */}
       <TextInput
-        label='Email ID'
+        label='Email'
         mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Password'
         mode='outlined'
-        secureTextEntry
+        secureTextEntry={!isPasswordVisible}
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={
+          <TextInput.Icon
+            icon={isPasswordVisible ? "eye" : "eye-off"}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          />
+        }
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
-      <TouchableOpacity>
-        <Text style={styles.forgotText}>Forgot?</Text>
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
       <Button
@@ -62,16 +168,14 @@ const LoginScreen = () => {
         style={styles.loginButton}
         labelStyle={styles.loginButtonText}
         onPress={handleLogin}
+        disabled={loading}
       >
-        Login
+        {loading ? "Logging in..." : "Login"}
       </Button>
 
       {/* Social Login */}
       <Text style={styles.orText}>Or, login with</Text>
       <View style={styles.socialContainer}>
-        <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name='facebook' size={24} color='#4267B2' />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.socialButton}>
           <FontAwesome name='google' size={24} color='#DB4437' />
         </TouchableOpacity>
@@ -92,7 +196,7 @@ const LoginScreen = () => {
           Register
         </Text>
       </Text>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -100,7 +204,7 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#FFFFFF",
     padding: 20,
     justifyContent: "center",
@@ -125,11 +229,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 15,
-  },
-  forgotText: {
-    textAlign: "right",
-    color: colors.primary,
-    marginBottom: 20,
+    backgroundColor: "#FFFFFF",
   },
   loginButton: {
     backgroundColor: colors.primary,
@@ -140,6 +240,8 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#FFFFFF",
+    textTransform: "uppercase",
   },
   orText: {
     textAlign: "center",
@@ -161,10 +263,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
@@ -174,6 +273,16 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     color: colors.primary,
+    fontWeight: "bold",
+  },
+  backButtonContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    textAlign: "right",
+    marginBottom: 15,
     fontWeight: "bold",
   },
 });

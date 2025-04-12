@@ -1,50 +1,53 @@
-# Welcome to your Expo app 👋
+# BitHealth 🩺
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Welcome to the BitHealth app! This Expo project uses file-based routing to simplify navigation.
 
-## Get started
+## Getting Started
 
-1. Install dependencies
+1. **Install dependencies:**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Configure Environment Variables:**
+
+   Create a `.env` file in the project root with all required environment variables. Make sure to prefix each variable with `EXPO_`. For example:
+
+   ```env
+   EXPO_PUBLIC_API_URL=https://your-api-url.com
+   ```
+   Get firebase.js and place it in app directory
+
+3. **Start the App:**
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   Choose your preferred run option from the Expo start screen:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   - Development build
+   - Android emulator
+   - iOS simulator
+   - Expo Go
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Building the APK
 
-## Get a fresh project
+To build an Android APK:
 
-When you're ready, run:
+1. **Using EAS Build (recommended):**
 
-```bash
-npm run reset-project
-```
+   Install the EAS CLI if you haven't already:
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+   ```bash
+   npm install -g eas-cli
+   ```
 
-## Learn more
+   Then run:
 
-To learn more about developing your project with Expo, look at the following resources:
+   ```bash
+   eas build --platform android
+   ```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+   Once the build completes, you'll receive a URL to download your APK.

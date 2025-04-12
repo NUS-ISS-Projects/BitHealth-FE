@@ -1,7 +1,6 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Button } from "react-native-paper";
-import { useLocalSearchParams } from "expo-router";
 import colors from "../theme/colors";
 import { Image } from "expo-image";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
