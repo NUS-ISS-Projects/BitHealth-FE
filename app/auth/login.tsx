@@ -5,49 +5,17 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
-import { auth } from "../firebase"; // Adjust the path if necessary
+import { Button, Text, TextInput, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
 import { auth } from "../../firebaseConfig";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-const ROUTES = {
-  doctor: "/doctor/dashboard",
-  patient: "/patient",
-};
-
-// Store data securely
-const storeData = async (key: string, value: string) => {
-  if (Platform.OS === "web") {
-    // Use localStorage for web
-    localStorage.setItem(key, value);
-  } else {
-    // Use expo-secure-store for mobile
-    await SecureStore.setItemAsync(key, value);
-  }
-};
-
-// Retrieve data securely
-const getData = async (key: string) => {
-  if (Platform.OS === "web") {
-    // Use localStorage for web
-    return localStorage.getItem(key);
-  } else {
-    // Use expo-secure-store for mobile
-    return await SecureStore.getItemAsync(key);
-  }
-};
-
-const USER_BASE_URL = process.env.EXPO_PUBLIC_USER_BASE_URL;
-const ROUTES = {
-  doctor: "/doctor/dashboard",
-  patient: "/patient",
-};
 
 // Store data securely
 const storeData = async (key: string, value: string) => {
@@ -72,37 +40,51 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      // Perform Firebase authentication
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
       const user = userCredential.user;
-
       const idToken = await user.getIdToken();
-      // Store the token securely
       storeData("authToken", idToken);
-
-      // Redirect based on user type and pass userData
-      redirectToRoute(userType);
+      // Fetch the user profile from the backend
+      const response = await fetch(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const localUser = await response.json();
+      if (userType === "doctor" && localUser.role !== "DOCTOR") {
+        if (Platform.OS === "web") {
+          window.alert("Access Denied! This account is not a doctor account.");
+        } else {
+          Alert.alert("Access Denied", "This account is not a doctor account.");
+        }
+        setLoading(false);
+        return;
+      } else if (userType === "patient" && localUser.role !== "PATIENT") {
+        if (Platform.OS === "web") {
+          window.alert("Access Denied! This account is not a patient account.");
+        } else {
+          Alert.alert(
+            "Access Denied",
+            "This account is not a patient account."
+          );
+        }
+        setLoading(false);
+        return;
+      }
+      const destination =
+        userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
+      router.replace(destination);
     } catch (error) {
-      Alert.alert(
-        "Error",
-        error.message || "Invalid username/email or password."
-      );
-      console.error("Login Error:", error);
+      if (Platform.OS === "web") {
+        window.alert("Login Error: Invalid email or password.");
+      } else {
+        Alert.alert("Login Error", "Invalid email or password.");
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  // Redirect to the appropriate route based on user type
-  const redirectToRoute = (userType: string | number | string[]) => {
-    router.push({
-      pathname: ROUTES[userType],
-      // Pass userData as a stringified JSON object
-    });
   };
 
   return (
@@ -116,6 +98,15 @@ const LoginScreen = () => {
         />
       </View>
       <View style={styles.headerContainer}>
+        <Image
+          source={
+            userType === "doctor"
+              ? require("../../assets/images/doctor-login.jpg")
+              : require("../../assets/images/patient-login.jpg")
+          }
+          style={styles.headerImage}
+          resizeMode='contain'
+        />
         <Text variant='headlineMedium' style={styles.welcomeText}>
           Welcome Back!
         </Text>
@@ -131,6 +122,7 @@ const LoginScreen = () => {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        autoCapitalize='none'
         theme={{
           colors: {
             primary: colors.primary,
@@ -158,6 +150,7 @@ const LoginScreen = () => {
         }}
         textColor={colors.primary}
       />
+
       {/* Forgot Password Link */}
       <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>

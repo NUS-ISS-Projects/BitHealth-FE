@@ -1,4 +1,3 @@
-// src/screens/RegisterScreen.tsx
 import React, { useState } from "react";
 import {
   Alert,
@@ -6,10 +5,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  Platform,
 } from "react-native";
-import { Button, Text, TextInput } from "react-native-paper";
+import { Button, Text, TextInput, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebaseConfig";
+import axios from "axios";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -20,15 +24,14 @@ const RegisterScreen = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
-
-  const auth = getAuth();
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   // Configure Google Auth
-  const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest({
-      webClientId: process.env.EXPO_PUBLIC_WEBCLIENT, // Replace with your Google Client ID
-      responseType: "token",
-    });
+  // const [googleRequest, googleResponse, googlePromptAsync] =
+  //   Google.useAuthRequest({
+  //     webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+  //     responseType: "token",
+  //   });
 
   // Handle Email/Password Registration
   const handleRegister = async () => {
@@ -43,10 +46,8 @@ const RegisterScreen = () => {
         password
       );
       const user = userCredential.user;
-
-      //Register user in supabase
-      const userData = {
-        name: username || "No Name", // Use display name or fallback
+      const payload = {
+        name: name,
         email: email,
         role: userType === "doctor" ? "DOCTOR" : "PATIENT",
         firebaseUid: user.uid,
@@ -54,70 +55,32 @@ const RegisterScreen = () => {
 
       const response = await axios.post(
         `${API_URL}/api/users/register`,
-        userData,
+        payload,
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
-      console.log("Response data:", response.data);
 
-      if (!response.data || Object.keys(response.data).length === 0) {
-        throw new Error("Registration has failed.");
+      if (!response.data) {
+        throw new Error("Registration failed on backend.");
       }
 
-      const responseData = response.data;
+      // Redirect to login page once registration is successful
+      router.push("/auth/login");
+    } catch (error: any) {
+      const errorMessage =
+        error.code === "auth/email-already-in-use"
+          ? "This email is already registered. Please use a different email."
+          : error.message || "Failed to register. Please try again.";
 
-      // Redirect based on user type
-      router.push({
-        pathname: ROUTES[userType],
-        params: { userData: JSON.stringify(responseData) }, // Pass userData as a stringified JSON object
-      });
-    } catch (error) {
-      Alert.alert(
-        "Error",
-        error.message || "Failed to register. Please try again."
-      );
+      if (Platform.OS === "web") {
+        window.alert(errorMessage);
+      } else {
+        Alert.alert("Error", errorMessage);
+      }
       console.error("Registration Error:", error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Handle Google Sign-In
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await googlePromptAsync();
-      if (result.type === "success") {
-        const { id_token } = result.params;
-
-        // Create a Google credential
-        const credential = GoogleAuthProvider.credential(id_token);
-
-        // Sign in with Firebase
-        const userCredential = await signInWithCredential(auth, credential);
-        const user = userCredential.user;
-
-        console.log("User signed in with Google:", user);
-
-        //Register user in supabase
-        const userData = {
-          name: username || "No Name", // Use display name or fallback
-          email: email,
-          password: "GooglePass", // Use the Google ID token as the password (optional)
-          role: userType, // Pass the user type (doctor/patient)
-        };
-
-        // Redirect based on user type
-        router.push({
-          pathname: ROUTES[userType],
-          params: { userData: JSON.stringify(userData) }, // Pass userData as a stringified JSON object
-        });
-      }
-    } catch (error) {
-      Alert.alert("Error", error.message || "Failed to sign in with Google.");
-      console.error("Google Sign-In Error:", error.message);
     }
   };
 
@@ -143,7 +106,7 @@ const RegisterScreen = () => {
         textColor={colors.primary}
       />
       <TextInput
-        label='Email ID'
+        label='Email'
         mode='outlined'
         value={email}
         onChangeText={setEmail}
@@ -181,6 +144,7 @@ const RegisterScreen = () => {
         mode='contained'
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
+        onPress={handleRegister}
       >
         {loading ? "Registering..." : "Register"}
       </Button>
@@ -205,10 +169,7 @@ const RegisterScreen = () => {
         <View style={styles.separator} />
       </View>
       <View style={styles.socialButtonsContainer}>
-        <TouchableOpacity
-          style={styles.socialButton}
-          onPress={handleGoogleSignIn}
-        >
+        <TouchableOpacity style={styles.socialButton}>
           <View style={styles.socialContentContainer}>
             <View style={styles.socialIconContainer}>
               <FontAwesome name='google' size={20} color='#DB4437' />
@@ -311,10 +272,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     paddingRight: 30,
-  },
-  backButtonContainer: {
-    alignSelf: "flex-start",
-    marginBottom: 10,
   },
 });
 
