@@ -1,4 +1,3 @@
-// src/screens/RegisterScreen.tsx
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -12,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, IconButton, Text, TextInput } from "react-native-paper";
+import { Button, Text, TextInput } from "react-native-paper";
 import { auth } from "../../firebaseConfig";
 import colors from "../theme/colors";
 
@@ -27,6 +26,14 @@ const RegisterScreen = () => {
   const { userType } = useLocalSearchParams();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+  // Configure Google Auth
+  // const [googleRequest, googleResponse, googlePromptAsync] =
+  //   Google.useAuthRequest({
+  //     webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+  //     responseType: "token",
+  //   });
+
+  // Handle Email/Password Registration
   const handleRegister = async () => {
     setLoading(true);
     try {
@@ -78,14 +85,6 @@ const RegisterScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerContainer}>
-        <View style={styles.backButtonContainer}>
-          <IconButton
-            icon='arrow-left'
-            iconColor={colors.primary}
-            size={24}
-            onPress={() => router.back()}
-          />
-        </View>
         <Text variant='headlineMedium' style={styles.welcomeText}>
           Create a {userType === "doctor" ? "Doctor" : "Patient"} account
         </Text>
@@ -110,6 +109,7 @@ const RegisterScreen = () => {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        keyboardType='email-address'
         autoCapitalize='none'
         theme={{
           colors: {
@@ -140,10 +140,9 @@ const RegisterScreen = () => {
       />
       <Button
         mode='contained'
-        onPress={handleRegister}
-        disabled={loading}
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
+        onPress={handleRegister}
       >
         {loading ? "Registering..." : "Register"}
       </Button>

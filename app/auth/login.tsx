@@ -40,23 +40,18 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     setLoading(true);
     try {
-      // Perform Firebase authentication
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email,
         password
       );
       const user = userCredential.user;
-
       const idToken = await user.getIdToken();
-      // Store the token securely
       storeData("authToken", idToken);
-
-      // Validate user role for interface
+      // Fetch the user profile from the backend
       const response = await fetch(`${API_URL}/api/users/profile`, {
         headers: { Authorization: `Bearer ${idToken}` },
       });
-      // Check role from localUser
       const localUser = await response.json();
       if (userType === "doctor" && localUser.role !== "DOCTOR") {
         if (Platform.OS === "web") {
@@ -87,7 +82,6 @@ const LoginScreen = () => {
       } else {
         Alert.alert("Login Error", "Invalid email or password.");
       }
-      console.error("Login Error:", error);
     } finally {
       setLoading(false);
     }
@@ -107,8 +101,8 @@ const LoginScreen = () => {
         <Image
           source={
             userType === "doctor"
-              ? require("../../assets/images/doctor-login.jpg") // Image for doctor
-              : require("../../assets/images/patient-login.jpg") // Image for patient
+              ? require("../../assets/images/doctor-login.jpg")
+              : require("../../assets/images/patient-login.jpg")
           }
           style={styles.headerImage}
           resizeMode='contain'
@@ -128,6 +122,7 @@ const LoginScreen = () => {
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        autoCapitalize='none'
         theme={{
           colors: {
             primary: colors.primary,
@@ -155,6 +150,11 @@ const LoginScreen = () => {
         }}
         textColor={colors.primary}
       />
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
+
       {/* Forgot Password Link */}
       <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
