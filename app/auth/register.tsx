@@ -1,20 +1,20 @@
 // src/screens/RegisterScreen.tsx
+import { FontAwesome } from "@expo/vector-icons";
+import axios from "axios";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
   Alert,
   Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Button, Text, TextInput, IconButton } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { Button, IconButton, Text, TextInput } from "react-native-paper";
 import { auth } from "../../firebaseConfig";
-import axios from "axios";
 import colors from "../theme/colors";
-import { FontAwesome } from "@expo/vector-icons";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -45,7 +45,7 @@ const RegisterScreen = () => {
         role: userType === "doctor" ? "DOCTOR" : "PATIENT",
         firebaseUid: user.uid,
       };
-
+      console.log(payload);
       const response = await axios.post(
         `${API_URL}/api/users/register`,
         payload,
@@ -53,7 +53,7 @@ const RegisterScreen = () => {
           headers: { "Content-Type": "application/json" },
         }
       );
-
+      console.log(response);
       if (!response.data) {
         throw new Error("Registration failed on backend.");
       }
