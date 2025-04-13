@@ -7,13 +7,21 @@ import {
   View,
   Platform,
 } from "react-native";
-import { Button, Text, TextInput, IconButton } from "react-native-paper";
+import { Button, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  signInWithCredential,
+  GoogleAuthProvider,
+} from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 import axios from "axios";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+WebBrowser.maybeCompleteAuthSession();
+import { makeRedirectUri } from "expo-auth-session";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -25,13 +33,16 @@ const RegisterScreen = () => {
   const router = useRouter();
   const { userType } = useLocalSearchParams();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const redirectUri = makeRedirectUri({});
 
   // Configure Google Auth
-  // const [googleRequest, googleResponse, googlePromptAsync] =
-  //   Google.useAuthRequest({
-  //     webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
-  //     responseType: "token",
-  //   });
+  const [googleRequest, googleResponse, googlePromptAsync] =
+    Google.useAuthRequest({
+      redirectUri,
+      webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+      responseType: "token",
+      usePKCE: false,
+    });
 
   // Handle Email/Password Registration
   const handleRegister = async () => {
@@ -81,6 +92,57 @@ const RegisterScreen = () => {
       console.error("Registration Error:", error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle Google Sign-In
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await googlePromptAsync();
+      if (result.type === "success") {
+        const { id_token } = result.params;
+
+        // Create a Google credential
+        const credential = GoogleAuthProvider.credential(id_token);
+
+        // Sign in with Firebase
+        const userCredential = await signInWithCredential(auth, credential);
+        const user = userCredential.user;
+        const payload = {
+          name: user.displayName || "",
+          email: user.email || "",
+          role: userType === "doctor" ? "DOCTOR" : "PATIENT",
+          firebaseUid: user.uid,
+        };
+
+        try {
+          await axios.post(`${API_URL}/api/users/register`, payload, {
+            headers: { "Content-Type": "application/json" },
+          });
+        } catch (error: any) {
+          // If the error indicates the user is already registered, we ignore it.
+          if (!(error.response && error.response.status === 409)) {
+            throw error;
+          }
+        }
+        const destination =
+          userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
+        if (window.opener) {
+          window.opener.location.href = destination;
+          window.close();
+        } else {
+          router.replace(destination);
+        }
+        WebBrowser.dismissBrowser();
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to sign in with Google.";
+      if (Platform.OS === "web") {
+        window.alert(errorMessage);
+      } else {
+        Alert.alert("Error", errorMessage);
+      }
+      console.error("Google Sign-In Error:", error.message);
     }
   };
 
@@ -169,7 +231,10 @@ const RegisterScreen = () => {
         <View style={styles.separator} />
       </View>
       <View style={styles.socialButtonsContainer}>
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={handleGoogleSignIn}
+        >
           <View style={styles.socialContentContainer}>
             <View style={styles.socialIconContainer}>
               <FontAwesome name='google' size={20} color='#DB4437' />

@@ -14,7 +14,6 @@
     "android": {
       "package": "com.nus.bithealth",
       "versionCode": 1,
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
