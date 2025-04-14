@@ -18,10 +18,10 @@ import {
 } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
-import { makeRedirectUri } from "expo-auth-session";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -33,16 +33,21 @@ const RegisterScreen = () => {
   const router = useRouter();
   const { userType } = useLocalSearchParams();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const redirectUri = makeRedirectUri({});
 
   // Configure Google Auth
   const [googleRequest, googleResponse, googlePromptAsync] =
     Google.useAuthRequest({
-      redirectUri,
       webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
-      responseType: "token",
-      usePKCE: false,
+      responseType: "id_token",
     });
+
+  const storeData = async (key: string, value: string) => {
+    if (Platform.OS === "web") {
+      localStorage.setItem(key, value);
+    } else {
+      await SecureStore.setItemAsync(key, value);
+    }
+  };
 
   // Handle Email/Password Registration
   const handleRegister = async () => {
@@ -66,10 +71,7 @@ const RegisterScreen = () => {
 
       const response = await axios.post(
         `${API_URL}/api/users/register`,
-        payload,
-        {
-          headers: { "Content-Type": "application/json" },
-        }
+        payload
       );
 
       if (!response.data) {
@@ -108,6 +110,8 @@ const RegisterScreen = () => {
         // Sign in with Firebase
         const userCredential = await signInWithCredential(auth, credential);
         const user = userCredential.user;
+        const idToken = await user.getIdToken();
+        storeData("authToken", idToken);
         const payload = {
           name: user.displayName || "",
           email: user.email || "",
@@ -116,9 +120,7 @@ const RegisterScreen = () => {
         };
 
         try {
-          await axios.post(`${API_URL}/api/users/register`, payload, {
-            headers: { "Content-Type": "application/json" },
-          });
+          await axios.post(`${API_URL}/api/users/register`, payload);
         } catch (error: any) {
           // If the error indicates the user is already registered, we ignore it.
           if (!(error.response && error.response.status === 409)) {

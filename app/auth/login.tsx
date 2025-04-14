@@ -20,6 +20,8 @@ import { Button, Text, TextInput, IconButton } from "react-native-paper";
 import colors from "../theme/colors";
 import { auth } from "../../firebaseConfig";
 import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+WebBrowser.maybeCompleteAuthSession();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 import axios from "axios";
 
@@ -44,8 +46,8 @@ const LoginScreen = () => {
   // Configure Google Auth Request
   const [googleRequest, googleResponse, googlePromptAsync] =
     Google.useAuthRequest({
-      responseType: "token",
       webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+      responseType: "id_token",
     });
 
   // Handle Email/Password Login
@@ -128,8 +130,7 @@ const LoginScreen = () => {
           };
           const regResponse = await axios.post(
             `${API_URL}/api/users/register`,
-            payload,
-            { headers: { "Content-Type": "application/json" } }
+            payload
           );
           localUser = regResponse.data;
         } else {
@@ -167,6 +168,7 @@ const LoginScreen = () => {
         const destination =
           userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
         router.replace(destination);
+        WebBrowser.dismissBrowser();
       }
     } catch (error: any) {
       const errorMessage = error.message || "Google login error.";
