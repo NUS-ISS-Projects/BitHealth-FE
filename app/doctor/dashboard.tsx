@@ -69,7 +69,7 @@ export default function DoctorDashboard() {
       });
       const { userId,name } = profileResponse.data; // Extract userId
       console.log("User ID:", userId);
-      const response = await axios.get(`${API_URL}/api/appointments/doctor/${userId}`, {
+      const response = await axios.get(`${API_URL}/api/appointments/doctor`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

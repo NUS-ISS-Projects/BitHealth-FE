@@ -59,7 +59,7 @@ export default function PatientSettings() {
       await clearAuthToken();
 
       // Navigate to the login screen
-      router.replace("/auth/login");
+      router.replace("/");
     } catch (error) {
       console.error("Error during logout:", error);
       Alert.alert("Error", "Failed to log out. Please try again.");

@@ -1,13 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
-import { Text, Card, Badge } from "react-native-paper";
-import { FontAwesome } from "@expo/vector-icons";
-import colors from "../theme/colors";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import axios from "axios";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 import { formatDate, formatTime } from "@/helper/dateTimeFormatter";
 import { getStatusColor } from "@/helper/statusColor";
+import { FontAwesome } from "@expo/vector-icons";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Badge, Card, Text } from "react-native-paper";
+import colors from "../theme/colors";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
 
 export default function History() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -15,9 +26,26 @@ export default function History() {
 
   useEffect(() => {
     async function fetchConsultationHistory() {
+      const token = await getData("authToken");
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
+      // Fetch patient profile
+      const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const { userId,name } = profileResponse.data; // Extract userId
+      console.log("User ID:", userId);
       try {
         const response = await axios.get(
-          `${API_URL}/api/appointments/patient/1`
+          `${API_URL}/api/appointments/patient`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         const data = response.data.map((appointment: any) => ({
           id: appointment.appointmentId,
