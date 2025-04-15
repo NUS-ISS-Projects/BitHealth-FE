@@ -39,7 +39,7 @@ export default function DoctorAppointmentsScreen() {
       console.log("User ID:", userId);  
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/appointments/doctor/${userId}`, {
+      const response = await axios.get(`${API_URL}/api/appointments/doctor`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
