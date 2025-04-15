@@ -1,5 +1,6 @@
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { isAfter, isBefore, isEqual, parseISO } from "date-fns";
 import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import { Image, Platform, ScrollView, StyleSheet, View } from "react-native";
@@ -41,32 +42,50 @@ export default function PatientHome() {
             Authorization: `Bearer ${token}`,
           },
         });
-      
-        const { userId,name } = profileResponse.data; // Extract userId
-        console.log("User ID:", userId);
-        console.log("User Name:", name);
+        const { name } = profileResponse.data; // Extract user name
         setUserName(name);
-      
+
         // Fetch appointments
         const appointmentsResponse = await axios.get(
-          `${API_URL}/api/appointments/patient`, // URL
+          `${API_URL}/api/appointments/patient`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+              Authorization: `Bearer ${token}`,
             },
           }
         );
         const data = appointmentsResponse.data;
-      
-        setUserName(data[0].patient.user.name);
-        const upcoming = data.filter(
-          (apt: { status: string }) =>
-            apt.status === "PENDING" || apt.status === "CONFIRMED"
-        );
-        const recent = data.filter(
-          (apt: { status: string }) =>
-            apt.status !== "PENDING" && apt.status !== "CONFIRMED"
-        );
+
+        // Get current date and time
+        const now = new Date();
+
+        // Helper function to parse appointment date and time
+        const parseAppointmentDateTime = (appointment: { status?: string; appointmentDate?: any; appointmentTime?: any; }) => {
+          const date = parseISO(appointment.appointmentDate);
+          const timeParts = appointment.appointmentTime.split(":").map(Number);
+          return new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate(),
+            timeParts[0], // Hours
+            timeParts[1]  // Minutes
+          );
+        };
+
+        // Filter appointments
+        const upcoming = data.filter((apt: { status: string; }) => {
+          const appointmentDateTime = parseAppointmentDateTime(apt);
+          return (
+            isAfter(appointmentDateTime, now) ||
+            (isEqual(appointmentDateTime, now) &&
+              (apt.status === "PENDING" || apt.status === "CONFIRMED"))
+          );
+        });
+
+        const recent = data.filter((apt: any) => {
+          const appointmentDateTime = parseAppointmentDateTime(apt);
+          return isBefore(appointmentDateTime, now);
+        });
 
         setUpcomingAppointments(upcoming);
         setRecentAppointments(recent);
@@ -74,10 +93,12 @@ export default function PatientHome() {
         console.error("Error fetching data:", error);
       }
     }
+
     fetchAppointments();
   }, []);
 
   const hasUpcoming = upcomingAppointments.length > 0;
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.contentWrapper}>
@@ -87,22 +108,24 @@ export default function PatientHome() {
             source={require("../../assets/images/bithealth-logo.png")}
             style={styles.logo}
           />
-          <Text variant='titleMedium' style={styles.title}>
+          <Text variant="titleMedium" style={styles.title}>
             BitHealth
           </Text>
         </View>
         <View style={styles.greetingContainer}>
-          <Text variant='titleSmall' style={styles.greetingText}>
+          <Text variant="titleSmall" style={styles.greetingText}>
             Hello,
           </Text>
-          <Text variant='titleLarge' style={styles.userName}>
+          <Text variant="titleLarge" style={styles.userName}>
             {userName} 👋
           </Text>
         </View>
+
+        {/* Upcoming Appointments */}
         {hasUpcoming ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text variant='titleMedium' style={styles.sectionTitle}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
                 Upcoming Appointments
               </Text>
             </View>
@@ -119,16 +142,16 @@ export default function PatientHome() {
                   />
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
-                      <Text variant='titleSmall' style={styles.doctorName}>
+                      <Text variant="titleSmall" style={styles.doctorName}>
                         {appointment.doctor.user.name}
                       </Text>
                     </View>
-                    <Text variant='bodySmall' style={styles.appointmentReason}>
+                    <Text variant="bodySmall" style={styles.appointmentReason}>
                       {appointment.reasonForVisit}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
-                        variant='labelMedium'
+                        variant="labelMedium"
                         style={styles.appointmentDate}
                       >
                         {formatDate(appointment.appointmentDate)},{" "}
@@ -140,7 +163,7 @@ export default function PatientHome() {
               </Card>
             ))}
             <Button
-              mode='contained'
+              mode="contained"
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
               onPress={() => navigation.navigate("Reason")}
@@ -155,15 +178,15 @@ export default function PatientHome() {
                 source={require("../../assets/images/patient-home.png")}
                 style={styles.bookingImage}
               />
-              <Text variant='titleMedium' style={styles.bookingTitle}>
+              <Text variant="titleMedium" style={styles.bookingTitle}>
                 No booking schedule
               </Text>
-              <Text variant='bodyMedium' style={styles.bookingDescription}>
+              <Text variant="bodyMedium" style={styles.bookingDescription}>
                 Seems like you do not have any appointment scheduled today.
               </Text>
               <View>
                 <Button
-                  mode='contained'
+                  mode="contained"
                   style={styles.bookButton}
                   labelStyle={{ color: "white" }}
                   onPress={() => navigation.navigate("Reason")}
@@ -177,11 +200,10 @@ export default function PatientHome() {
 
         {/* Recent Appointments */}
         <View style={styles.sectionHeader}>
-          <Text variant='titleMedium' style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
             Recent Appointments
           </Text>
         </View>
-
         {recentAppointments.map((appointment, index) => (
           <Card
             key={index}
@@ -192,15 +214,18 @@ export default function PatientHome() {
               <Avatar.Image size={50} source={getAvatarSource(appointment)} />
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
-                  <Text variant='titleSmall' style={styles.doctorName}>
+                  <Text variant="titleSmall" style={styles.doctorName}>
                     {appointment.doctor.user.name}
                   </Text>
                 </View>
-                <Text variant='bodySmall' style={styles.appointmentReason}>
+                <Text variant="bodySmall" style={styles.appointmentReason}>
                   {appointment.reasonForVisit}
                 </Text>
                 <View style={styles.timeContainer}>
-                  <Text variant='labelMedium' style={styles.appointmentDate}>
+                  <Text
+                    variant="labelMedium"
+                    style={styles.appointmentDate}
+                  >
                     {formatDate(appointment.appointmentDate)},{" "}
                     {formatTime(appointment.appointmentTime)}
                   </Text>
