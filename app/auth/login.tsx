@@ -1,29 +1,108 @@
-import React, { useState } from "react";
-import { View, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import colors from "../theme/colors";
+import { auth } from "@/firebaseConfig";
 import { FontAwesome } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from "react";
+import {
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Button, IconButton, Text, TextInput } from "react-native-paper";
+import colors from "../theme/colors";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+// Store data securely
+const storeData = async (key: string, value: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    localStorage.setItem(key, value);
+  } else {
+    // Use expo-secure-store for mobile
+    await SecureStore.setItemAsync(key, value);
+  }
+};
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
 
-  // Handle Login
-  const handleLogin = () => {
-    router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+  // Handle Email/Password Login
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      const idToken = await user.getIdToken();
+      storeData("authToken", idToken);
+      // Fetch the user profile from the backend
+      const response = await fetch(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const localUser = await response.json();
+      if (userType === "doctor" && localUser.role !== "DOCTOR") {
+        if (Platform.OS === "web") {
+          window.alert("Access Denied! This account is not a doctor account.");
+        } else {
+          Alert.alert("Access Denied", "This account is not a doctor account.");
+        }
+        setLoading(false);
+        return;
+      } else if (userType === "patient" && localUser.role !== "PATIENT") {
+        if (Platform.OS === "web") {
+          window.alert("Access Denied! This account is not a patient account.");
+        } else {
+          Alert.alert(
+            "Access Denied",
+            "This account is not a patient account."
+          );
+        }
+        setLoading(false);
+        return;
+      }
+      const destination =
+        userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
+      router.replace(destination);
+    } catch (error) {
+      if (Platform.OS === "web") {
+        window.alert("Login Error: Invalid email or password.");
+      } else {
+        Alert.alert("Login Error", "Invalid email or password.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.backButtonContainer}>
+        <IconButton
+          icon='arrow-left'
+          iconColor={colors.primary}
+          size={24}
+          onPress={() => router.back()}
+        />
+      </View>
       <View style={styles.headerContainer}>
         <Image
           source={
             userType === "doctor"
-              ? require("../../assets/images/doctor-login.jpg") // Image for doctor
-              : require("../../assets/images/patient-login.jpg") // Image for patient
+              ? require("../../assets/images/doctor-login.jpg")
+              : require("../../assets/images/patient-login.jpg")
           }
           style={styles.headerImage}
           resizeMode='contain'
@@ -38,23 +117,47 @@ const LoginScreen = () => {
 
       {/* Login Form */}
       <TextInput
-        label='Email ID'
+        label='Email'
         mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
+        autoCapitalize='none'
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Password'
         mode='outlined'
-        secureTextEntry
+        secureTextEntry={!isPasswordVisible}
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={
+          <TextInput.Icon
+            icon={isPasswordVisible ? "eye" : "eye-off"}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          />
+        }
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
-      <TouchableOpacity>
-        <Text style={styles.forgotText}>Forgot?</Text>
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
+
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
       <Button
@@ -62,16 +165,14 @@ const LoginScreen = () => {
         style={styles.loginButton}
         labelStyle={styles.loginButtonText}
         onPress={handleLogin}
+        disabled={loading}
       >
-        Login
+        {loading ? "Logging in..." : "Login"}
       </Button>
 
       {/* Social Login */}
       <Text style={styles.orText}>Or, login with</Text>
       <View style={styles.socialContainer}>
-        <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name='facebook' size={24} color='#4267B2' />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.socialButton}>
           <FontAwesome name='google' size={24} color='#DB4437' />
         </TouchableOpacity>
@@ -92,7 +193,7 @@ const LoginScreen = () => {
           Register
         </Text>
       </Text>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -100,7 +201,7 @@ export default LoginScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#FFFFFF",
     padding: 20,
     justifyContent: "center",
@@ -125,11 +226,7 @@ const styles = StyleSheet.create({
   },
   input: {
     marginBottom: 15,
-  },
-  forgotText: {
-    textAlign: "right",
-    color: colors.primary,
-    marginBottom: 20,
+    backgroundColor: "#FFFFFF",
   },
   loginButton: {
     backgroundColor: colors.primary,
@@ -163,10 +260,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
@@ -176,6 +270,16 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     color: colors.primary,
+    fontWeight: "bold",
+  },
+  backButtonContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
+  },
+  forgotPasswordText: {
+    color: colors.primary,
+    textAlign: "right",
+    marginBottom: 15,
     fontWeight: "bold",
   },
 });

@@ -1,18 +1,85 @@
-import React, { useState } from "react";
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Text, TextInput, Button } from "react-native-paper";
-import { useRouter, useLocalSearchParams } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
+import axios from "axios";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from "react";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
+import { auth } from "../../firebaseConfig";
 import colors from "../theme/colors";
 
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
 const RegisterScreen = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const handleRegister = () => {
-    router.push(userType === "doctor" ? "/doctor/dashboard" : "/patient");
+  // Configure Google Auth
+  // const [googleRequest, googleResponse, googlePromptAsync] =
+  //   Google.useAuthRequest({
+  //     webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+  //     responseType: "token",
+  //   });
+
+  // Handle Email/Password Registration
+  const handleRegister = async () => {
+    setLoading(true);
+    try {
+      if (!name || !email || !password) {
+        throw new Error("Please fill in all fields.");
+      }
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      const payload = {
+        name: name,
+        email: email,
+        role: userType === "doctor" ? "DOCTOR" : "PATIENT",
+        firebaseUid: user.uid,
+      };
+      console.log(payload);
+      const response = await axios.post(
+        `${API_URL}/api/users/register`,
+        payload,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      console.log(response);
+      if (!response.data) {
+        throw new Error("Registration failed on backend.");
+      }
+      router.push("/auth/login");
+    } catch (error: any) {
+      const errorMessage =
+        error.code === "auth/email-already-in-use"
+          ? "This email is already registered. Please use a different email."
+          : error.message || "Failed to register. Please try again.";
+
+      if (Platform.OS === "web") {
+        window.alert(errorMessage);
+      } else {
+        Alert.alert("Error", errorMessage);
+      }
+      console.error("Registration Error:", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,37 +89,63 @@ const RegisterScreen = () => {
           Create a {userType === "doctor" ? "Doctor" : "Patient"} account
         </Text>
       </View>
-
-      {/* Registration Form */}
       <TextInput
-        label='Email ID'
+        label='Name'
+        mode='outlined'
+        value={name}
+        onChangeText={setName}
+        style={styles.input}
+        autoCapitalize='none'
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
+      />
+      <TextInput
+        label='Email'
         mode='outlined'
         value={email}
         onChangeText={setEmail}
         style={styles.input}
         keyboardType='email-address'
         autoCapitalize='none'
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
       <TextInput
         label='Password'
         mode='outlined'
-        secureTextEntry
+        secureTextEntry={!isPasswordVisible}
         value={password}
         onChangeText={setPassword}
         style={styles.input}
-        right={<TextInput.Icon icon='eye' />}
+        right={
+          <TextInput.Icon
+            icon={isPasswordVisible ? "eye" : "eye-off"}
+            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+          />
+        }
+        theme={{
+          colors: {
+            primary: colors.primary,
+          },
+        }}
+        textColor={colors.primary}
       />
-
       <Button
         mode='contained'
         style={styles.registerButton}
         labelStyle={styles.registerButtonText}
         onPress={handleRegister}
       >
-        Register
+        {loading ? "Registering..." : "Register"}
       </Button>
-
-      {/* Login Link */}
       <Text style={styles.loginText}>
         Already have an account?{" "}
         <Text
@@ -80,15 +173,6 @@ const RegisterScreen = () => {
               <FontAwesome name='google' size={20} color='#DB4437' />
             </View>
             <Text style={styles.socialButtonText}>Continue with Google</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.socialButton}>
-          <View style={styles.socialContentContainer}>
-            <View style={styles.socialIconContainer}>
-              <FontAwesome name='facebook' size={20} color='#4267B2' />
-            </View>
-            <Text style={styles.socialButtonText}>Continue with Facebook</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -134,6 +218,7 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#FFFFFF",
   },
   loginText: {
     textAlign: "center",
@@ -185,6 +270,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     paddingRight: 30,
+  },
+  backButtonContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
   },
 });
 
