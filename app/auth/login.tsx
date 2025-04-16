@@ -2,7 +2,11 @@ import { auth } from "@/firebaseConfig";
 import { FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signInWithCredential,
+  GoogleAuthProvider,
+} from "firebase/auth";
 import React, { useState } from "react";
 import {
   Alert,
@@ -15,7 +19,11 @@ import {
 } from "react-native";
 import { Button, IconButton, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
+import * as Google from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+WebBrowser.maybeCompleteAuthSession();
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import axios from "axios";
 
 // Store data securely
 const storeData = async (key: string, value: string) => {
@@ -35,6 +43,12 @@ const LoginScreen = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
+  // Configure Google Auth Request
+  const [googleRequest, googleResponse, googlePromptAsync] =
+    Google.useAuthRequest({
+      webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+      responseType: "id_token",
+    });
 
   // Handle Email/Password Login
   const handleLogin = async () => {
@@ -84,6 +98,86 @@ const LoginScreen = () => {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle Google Sign-In
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await googlePromptAsync();
+      if (result.type === "success") {
+        const { id_token } = result.params;
+        const credential = GoogleAuthProvider.credential(id_token);
+        const userCredential = await signInWithCredential(auth, credential);
+        const user = userCredential.user;
+        const idToken = await user.getIdToken();
+        storeData("authToken", idToken);
+
+        // Fetch the user profile from the backend
+        const response = await fetch(`${API_URL}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        let localUser;
+        // Check if the user exists in the backend, If not, register the user
+        if (response.ok) {
+          localUser = await response.json();
+        } else if (response.status === 404) {
+          const payload = {
+            name: user.displayName || "",
+            email: user.email || "",
+            role: userType === "doctor" ? "DOCTOR" : "PATIENT",
+            firebaseUid: user.uid,
+          };
+          const regResponse = await axios.post(
+            `${API_URL}/api/users/register`,
+            payload
+          );
+          localUser = regResponse.data;
+        } else {
+          throw new Error("Failed to fetch user profile");
+        }
+
+        if (userType === "doctor" && localUser.role !== "DOCTOR") {
+          if (Platform.OS === "web") {
+            window.alert(
+              "Access Denied! This account is not a doctor account."
+            );
+          } else {
+            Alert.alert(
+              "Access Denied",
+              "This account is not a doctor account."
+            );
+          }
+          setLoading(false);
+          return;
+        } else if (userType === "patient" && localUser.role !== "PATIENT") {
+          if (Platform.OS === "web") {
+            window.alert(
+              "Access Denied! This account is not a patient account."
+            );
+          } else {
+            Alert.alert(
+              "Access Denied",
+              "This account is not a patient account."
+            );
+          }
+          setLoading(false);
+          return;
+        }
+
+        const destination =
+          userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
+        router.replace(destination);
+        WebBrowser.dismissBrowser();
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || "Google login error.";
+      if (Platform.OS === "web") {
+        window.alert(errorMessage);
+      } else {
+        Alert.alert("Error", errorMessage);
+      }
+      console.error("Google Login Error:", error.message);
     }
   };
 
@@ -173,7 +267,10 @@ const LoginScreen = () => {
       {/* Social Login */}
       <Text style={styles.orText}>Or, login with</Text>
       <View style={styles.socialContainer}>
-        <TouchableOpacity style={styles.socialButton}>
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={handleGoogleSignIn}
+        >
           <FontAwesome name='google' size={24} color='#DB4437' />
         </TouchableOpacity>
       </View>
