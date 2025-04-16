@@ -1,11 +1,12 @@
+import axios from "axios";
 import React, { useState } from "react";
 import {
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   View,
-  Platform,
 } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
@@ -17,7 +18,6 @@ import {
   GoogleAuthProvider,
 } from "firebase/auth";
 import { auth } from "../../firebaseConfig";
-import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
@@ -68,17 +68,15 @@ const RegisterScreen = () => {
         role: userType === "doctor" ? "DOCTOR" : "PATIENT",
         firebaseUid: user.uid,
       };
-
+      console.log(payload);
       const response = await axios.post(
         `${API_URL}/api/users/register`,
         payload
       );
-
+      console.log(response);
       if (!response.data) {
         throw new Error("Registration failed on backend.");
       }
-
-      // Redirect to login page once registration is successful
       router.push("/auth/login");
     } catch (error: any) {
       const errorMessage =
@@ -339,6 +337,10 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     paddingRight: 30,
+  },
+  backButtonContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 10,
   },
 });
 

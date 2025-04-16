@@ -1,14 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, Card, Avatar, Button, Divider } from "react-native-paper";
-import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
 import axios from "axios";
-import { formatTime, formatDate } from "../../helper/dateTimeFormatter";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Avatar, Button, Card, Divider, Text } from "react-native-paper";
 import { getAvatarSource } from "../../helper/avatarGenerator";
+import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
+import colors from "../theme/colors";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
 export default function DoctorDashboard() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [confirmedAppointments, setConfirmedAppointments] = useState<any[]>([]);
@@ -46,9 +56,26 @@ export default function DoctorDashboard() {
   };
   const fetchAppointments = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/appointments/doctor/2`);
+      const token = await getData("authToken");
+        if (!token) {
+          console.error("No authentication token found.");
+          return;
+        }
+      // Fetch doctor profile
+      const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const { userId,name } = profileResponse.data; // Extract userId
+      console.log("User ID:", userId);
+      const response = await axios.get(`${API_URL}/api/appointments/doctor`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = response.data;
-      setUserName(data[0].patient.user.name);
+      setUserName(name);
       const pending = data.filter((apt: any) => apt.status === "PENDING");
       const confirmed = data.filter((apt: any) => apt.status == "CONFIRMED");
       setPendingAppointments(pending);

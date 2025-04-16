@@ -1,23 +1,26 @@
+import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router"; // Import useRouter for navigation
+import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  Platform,
   ScrollView,
   StyleSheet,
-  View,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { DatePickerInput } from "react-native-paper-dates";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
+  Avatar,
+  Button,
+  SegmentedButtons,
   Text,
   TextInput,
-  Button,
-  Avatar,
-  SegmentedButtons,
 } from "react-native-paper";
+import { DatePickerInput } from "react-native-paper-dates";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import colors from "../theme/colors";
-import axios from "axios";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -29,6 +32,39 @@ export default function PatientSettings() {
   const [phone, setPhone] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const router = useRouter(); // Initialize router
+
+  // Cross-platform function to clear authentication token
+  const clearAuthToken = async () => {
+    try {
+      if (Platform.OS === "web") {
+        // Use localStorage for web
+        localStorage.removeItem("authToken");
+        console.log("Token cleared from localStorage (web)");
+      } else {
+        // Use SecureStore for mobile
+        await SecureStore.deleteItemAsync("authToken");
+        console.log("Token cleared from SecureStore (mobile)");
+      }
+    } catch (error) {
+      console.error("Error clearing auth token:", error);
+      throw error; // Re-throw the error for handling in the calling function
+    }
+  };
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      // Clear the authentication token
+      await clearAuthToken();
+
+      // Navigate to the login screen
+      router.replace("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      Alert.alert("Error", "Failed to log out. Please try again.");
+    }
+  };
 
   useEffect(() => {
     const loadPatientData = async () => {
@@ -141,8 +177,8 @@ export default function PatientSettings() {
           </TouchableOpacity>
         </View>
         <TextInput
-          label='Full Name'
-          mode='outlined'
+          label="Full Name"
+          mode="outlined"
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
@@ -179,11 +215,11 @@ export default function PatientSettings() {
           ]}
         />
         <TextInput
-          label='Email'
-          mode='outlined'
+          label="Email"
+          mode="outlined"
           value={email}
           onChangeText={setEmail}
-          keyboardType='email-address'
+          keyboardType="email-address"
           style={styles.input}
           theme={{
             colors: {
@@ -192,11 +228,11 @@ export default function PatientSettings() {
           }}
         />
         <TextInput
-          label='Phone Number'
-          mode='outlined'
+          label="Phone Number"
+          mode="outlined"
           value={phone}
           onChangeText={setPhone}
-          keyboardType='phone-pad'
+          keyboardType="phone-pad"
           style={styles.input}
           theme={{
             colors: {
@@ -205,12 +241,12 @@ export default function PatientSettings() {
           }}
         />
         <DatePickerInput
-          locale='en'
-          label='Date of Birth'
+          locale="en"
+          label="Date of Birth"
           value={dateOfBirth}
           onChange={(d) => setDateOfBirth(d)}
-          inputMode='start'
-          mode='outlined'
+          inputMode="start"
+          mode="outlined"
           style={styles.input}
           theme={{
             colors: {
@@ -221,12 +257,22 @@ export default function PatientSettings() {
 
         {/* Save Button */}
         <Button
-          mode='contained'
+          mode="contained"
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
         >
           Save Changes
+        </Button>
+
+        {/* Logout Button */}
+        <Button
+          mode="outlined"
+          style={styles.logoutButton}
+          labelStyle={styles.logoutButtonText}
+          onPress={handleLogout}
+        >
+          Logout
         </Button>
       </ScrollView>
     </SafeAreaProvider>
@@ -295,5 +341,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  logoutButton: {
+    borderColor: colors.primary,
+    borderWidth: 1,
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginTop: 20,
+  },
+  logoutButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.primary,
   },
 });

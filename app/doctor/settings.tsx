@@ -1,16 +1,19 @@
+import axios from "axios";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  Platform,
   ScrollView,
   StyleSheet,
-  View,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
-import { Text, TextInput, Button, Avatar } from "react-native-paper";
-import colors from "../theme/colors";
-import * as ImagePicker from "expo-image-picker";
+import { Avatar, Button, Text, TextInput } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import axios from "axios";
+import colors from "../theme/colors";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -20,6 +23,39 @@ export default function DoctorSettings() {
   const [email, setEmail] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  // Cross-platform function to clear authentication token
+  const clearAuthToken = async () => {
+    try {
+      if (Platform.OS === "web") {
+        // Use localStorage for web
+        localStorage.removeItem("authToken");
+        console.log("Token cleared from localStorage (web)");
+      } else {
+        // Use SecureStore for mobile
+        await SecureStore.deleteItemAsync("authToken");
+        console.log("Token cleared from SecureStore (mobile)");
+      }
+    } catch (error) {
+      console.error("Error clearing auth token:", error);
+      throw error; // Re-throw the error for handling in the calling function
+    }
+  };
+
+  // Function to handle logout
+  const handleLogout = async () => {
+    try {
+      // Clear the authentication token
+      await clearAuthToken();
+
+      // Navigate to the login screen
+      router.replace("/");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      Alert.alert("Error", "Failed to log out. Please try again.");
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -105,6 +141,7 @@ export default function DoctorSettings() {
       console.error("Error selecting image:", error);
     }
   };
+
   const getInitials = (name: string) => {
     if (!name) return "";
     const names = name.split(" ");
@@ -134,7 +171,7 @@ export default function DoctorSettings() {
           </TouchableOpacity>
         </View>
         <TextInput
-          label='Full Name'
+          label="Full Name"
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
@@ -145,7 +182,7 @@ export default function DoctorSettings() {
           }}
         />
         <TextInput
-          label='Specialty'
+          label="Specialty"
           value={specialty}
           onChangeText={setSpecialty}
           style={styles.input}
@@ -156,10 +193,10 @@ export default function DoctorSettings() {
           }}
         />
         <TextInput
-          label='Email'
+          label="Email"
           value={email}
           onChangeText={setEmail}
-          keyboardType='email-address'
+          keyboardType="email-address"
           style={styles.input}
           theme={{
             colors: {
@@ -170,12 +207,22 @@ export default function DoctorSettings() {
 
         {/* Save Button */}
         <Button
-          mode='contained'
+          mode="contained"
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
         >
           Save Changes
+        </Button>
+
+        {/* Logout Button */}
+        <Button
+          mode="outlined"
+          style={styles.logoutButton}
+          labelStyle={styles.logoutButtonText}
+          onPress={handleLogout}
+        >
+          Logout
         </Button>
       </ScrollView>
     </SafeAreaProvider>
@@ -223,5 +270,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  logoutButton: {
+    borderColor: colors.primary,
+    borderWidth: 1,
+    borderRadius: 50,
+    paddingVertical: 10,
+    marginTop: 20,
+  },
+  logoutButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.primary,
   },
 });

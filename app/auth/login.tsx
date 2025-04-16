@@ -1,3 +1,4 @@
+import { auth } from "@/firebaseConfig";
 import { FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -16,9 +17,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Button, Text, TextInput, IconButton } from "react-native-paper";
+import { Button, IconButton, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
-import { auth } from "../../firebaseConfig";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
@@ -244,6 +244,10 @@ const LoginScreen = () => {
         }}
         textColor={colors.primary}
       />
+      {/* Forgot Password Link */}
+      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+      </TouchableOpacity>
 
       {/* Forgot Password Link */}
       <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
