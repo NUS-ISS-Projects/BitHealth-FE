@@ -16,7 +16,7 @@ import {
   Text,
 } from "react-native-paper";
 import colors from "../theme/colors";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 type AppointmentParams = {
   doctorId: number;
@@ -72,21 +72,27 @@ export default function ConfirmAppointment() {
         setToken(authToken);
 
         // Fetch user profile
-        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-         // Extract userId
+        const profileResponse = await axios.get(
+          `${API_URL}/api/users/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
+        // Extract userId
         const { userId } = profileResponse.data; // Extract userId and patientId
         setUserId(userId);
 
         // Fetch patient profile
-        const patientProfileResponse = await axios.get(`${API_URL}/api/patients/profile/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
+        const patientProfileResponse = await axios.get(
+          `${API_URL}/api/patients/profile/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          }
+        );
 
         const { patientId } = patientProfileResponse.data;
         setPatientId(patientId);
@@ -193,10 +199,10 @@ export default function ConfirmAppointment() {
     <ScrollView style={styles.container}>
       <View style={styles.headerBarContainer}>
         <IconButton
-          mode="contained"
-          icon="arrow-left"
-          iconColor="#123D1F"
-          containerColor="white"
+          mode='contained'
+          icon='arrow-left'
+          iconColor='#123D1F'
+          containerColor='white'
           size={18}
           onPress={() => navigation.goBack()}
         />
@@ -257,7 +263,7 @@ export default function ConfirmAppointment() {
 
       {/* Book Now Button */}
       <Button
-        mode="contained"
+        mode='contained'
         style={styles.bookButton}
         labelStyle={styles.bookButtonText}
         onPress={handleBooking}

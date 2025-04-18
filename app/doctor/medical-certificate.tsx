@@ -21,7 +21,7 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import colors from "../theme/colors";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 import axios from "axios";
 import {
   formatDate,

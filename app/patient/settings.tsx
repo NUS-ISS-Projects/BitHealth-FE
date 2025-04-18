@@ -21,8 +21,7 @@ import {
 import { DatePickerInput } from "react-native-paper-dates";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import colors from "../theme/colors";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 export default function PatientSettings() {
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -177,8 +176,8 @@ export default function PatientSettings() {
           </TouchableOpacity>
         </View>
         <TextInput
-          label="Full Name"
-          mode="outlined"
+          label='Full Name'
+          mode='outlined'
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
@@ -215,11 +214,11 @@ export default function PatientSettings() {
           ]}
         />
         <TextInput
-          label="Email"
-          mode="outlined"
+          label='Email'
+          mode='outlined'
           value={email}
           onChangeText={setEmail}
-          keyboardType="email-address"
+          keyboardType='email-address'
           style={styles.input}
           theme={{
             colors: {
@@ -228,11 +227,11 @@ export default function PatientSettings() {
           }}
         />
         <TextInput
-          label="Phone Number"
-          mode="outlined"
+          label='Phone Number'
+          mode='outlined'
           value={phone}
           onChangeText={setPhone}
-          keyboardType="phone-pad"
+          keyboardType='phone-pad'
           style={styles.input}
           theme={{
             colors: {
@@ -241,12 +240,12 @@ export default function PatientSettings() {
           }}
         />
         <DatePickerInput
-          locale="en"
-          label="Date of Birth"
+          locale='en'
+          label='Date of Birth'
           value={dateOfBirth}
           onChange={(d) => setDateOfBirth(d)}
-          inputMode="start"
-          mode="outlined"
+          inputMode='start'
+          mode='outlined'
           style={styles.input}
           theme={{
             colors: {
@@ -257,7 +256,7 @@ export default function PatientSettings() {
 
         {/* Save Button */}
         <Button
-          mode="contained"
+          mode='contained'
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
@@ -267,7 +266,7 @@ export default function PatientSettings() {
 
         {/* Logout Button */}
         <Button
-          mode="outlined"
+          mode='outlined'
           style={styles.logoutButton}
           labelStyle={styles.logoutButtonText}
           onPress={handleLogout}

@@ -8,8 +8,7 @@ import { Avatar, Button, Card, Text } from "react-native-paper";
 import { getAvatarSource } from "../../helper/avatarGenerator";
 import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
 import colors from "../theme/colors";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 const getData = async (key: string) => {
   if (Platform.OS === "web") {
@@ -37,11 +36,14 @@ export default function PatientHome() {
         }
 
         // Fetch patient profile
-        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const profileResponse = await axios.get(
+          `${API_URL}/api/users/profile`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         const { name } = profileResponse.data; // Extract user name
         setUserName(name);
 
@@ -60,7 +62,11 @@ export default function PatientHome() {
         const now = new Date();
 
         // Helper function to parse appointment date and time
-        const parseAppointmentDateTime = (appointment: { status?: string; appointmentDate?: any; appointmentTime?: any; }) => {
+        const parseAppointmentDateTime = (appointment: {
+          status?: string;
+          appointmentDate?: any;
+          appointmentTime?: any;
+        }) => {
           const date = parseISO(appointment.appointmentDate);
           const timeParts = appointment.appointmentTime.split(":").map(Number);
           return new Date(
@@ -68,12 +74,12 @@ export default function PatientHome() {
             date.getMonth(),
             date.getDate(),
             timeParts[0], // Hours
-            timeParts[1]  // Minutes
+            timeParts[1] // Minutes
           );
         };
 
         // Filter appointments
-        const upcoming = data.filter((apt: { status: string; }) => {
+        const upcoming = data.filter((apt: { status: string }) => {
           const appointmentDateTime = parseAppointmentDateTime(apt);
           return (
             isAfter(appointmentDateTime, now) ||
@@ -108,15 +114,15 @@ export default function PatientHome() {
             source={require("../../assets/images/bithealth-logo.png")}
             style={styles.logo}
           />
-          <Text variant="titleMedium" style={styles.title}>
+          <Text variant='titleMedium' style={styles.title}>
             BitHealth
           </Text>
         </View>
         <View style={styles.greetingContainer}>
-          <Text variant="titleSmall" style={styles.greetingText}>
+          <Text variant='titleSmall' style={styles.greetingText}>
             Hello,
           </Text>
-          <Text variant="titleLarge" style={styles.userName}>
+          <Text variant='titleLarge' style={styles.userName}>
             {userName} 👋
           </Text>
         </View>
@@ -125,7 +131,7 @@ export default function PatientHome() {
         {hasUpcoming ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text variant='titleMedium' style={styles.sectionTitle}>
                 Upcoming Appointments
               </Text>
             </View>
@@ -142,16 +148,16 @@ export default function PatientHome() {
                   />
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
-                      <Text variant="titleSmall" style={styles.doctorName}>
+                      <Text variant='titleSmall' style={styles.doctorName}>
                         {appointment.doctor.user.name}
                       </Text>
                     </View>
-                    <Text variant="bodySmall" style={styles.appointmentReason}>
+                    <Text variant='bodySmall' style={styles.appointmentReason}>
                       {appointment.reasonForVisit}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
-                        variant="labelMedium"
+                        variant='labelMedium'
                         style={styles.appointmentDate}
                       >
                         {formatDate(appointment.appointmentDate)},{" "}
@@ -163,7 +169,7 @@ export default function PatientHome() {
               </Card>
             ))}
             <Button
-              mode="contained"
+              mode='contained'
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
               onPress={() => navigation.navigate("Reason")}
@@ -178,15 +184,15 @@ export default function PatientHome() {
                 source={require("../../assets/images/patient-home.png")}
                 style={styles.bookingImage}
               />
-              <Text variant="titleMedium" style={styles.bookingTitle}>
+              <Text variant='titleMedium' style={styles.bookingTitle}>
                 No booking schedule
               </Text>
-              <Text variant="bodyMedium" style={styles.bookingDescription}>
+              <Text variant='bodyMedium' style={styles.bookingDescription}>
                 Seems like you do not have any appointment scheduled today.
               </Text>
               <View>
                 <Button
-                  mode="contained"
+                  mode='contained'
                   style={styles.bookButton}
                   labelStyle={{ color: "white" }}
                   onPress={() => navigation.navigate("Reason")}
@@ -200,7 +206,7 @@ export default function PatientHome() {
 
         {/* Recent Appointments */}
         <View style={styles.sectionHeader}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant='titleMedium' style={styles.sectionTitle}>
             Recent Appointments
           </Text>
         </View>
@@ -214,18 +220,15 @@ export default function PatientHome() {
               <Avatar.Image size={50} source={getAvatarSource(appointment)} />
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
-                  <Text variant="titleSmall" style={styles.doctorName}>
+                  <Text variant='titleSmall' style={styles.doctorName}>
                     {appointment.doctor.user.name}
                   </Text>
                 </View>
-                <Text variant="bodySmall" style={styles.appointmentReason}>
+                <Text variant='bodySmall' style={styles.appointmentReason}>
                   {appointment.reasonForVisit}
                 </Text>
                 <View style={styles.timeContainer}>
-                  <Text
-                    variant="labelMedium"
-                    style={styles.appointmentDate}
-                  >
+                  <Text variant='labelMedium' style={styles.appointmentDate}>
                     {formatDate(appointment.appointmentDate)},{" "}
                     {formatTime(appointment.appointmentTime)}
                   </Text>

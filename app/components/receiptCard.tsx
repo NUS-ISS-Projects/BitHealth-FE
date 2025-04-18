@@ -3,7 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { Text } from "react-native-paper";
 import colors from "../theme/colors";
 import axios from "axios";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 interface ReceiptSectionProps {
   appointmentId: number;

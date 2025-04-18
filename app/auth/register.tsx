@@ -17,13 +17,13 @@ import {
   signInWithCredential,
   GoogleAuthProvider,
 } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { auth } from "../../configs/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL, GOOGLE_WEB_CLIENT_ID } from "@/configs/config";
 
 const RegisterScreen = () => {
   const [name, setName] = useState("");
@@ -37,7 +37,7 @@ const RegisterScreen = () => {
   // Configure Google Auth
   const [googleRequest, googleResponse, googlePromptAsync] =
     Google.useAuthRequest({
-      webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+      webClientId: GOOGLE_WEB_CLIENT_ID,
       responseType: "id_token",
     });
 

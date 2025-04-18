@@ -10,7 +10,7 @@ import colors from "../theme/colors";
 import { FontAwesome } from "@expo/vector-icons";
 import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
 import { getAvatarSource } from "../../helper/avatarGenerator";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 import axios from "axios";
 
 type AppointmentParams = {

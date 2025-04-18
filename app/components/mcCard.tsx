@@ -3,8 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from "react-native";
 import { Text, Card, Chip } from "react-native-paper";
 import axios from "axios";
 import colors from "../theme/colors";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:8080";
+import { API_URL } from "@/configs/config";
 
 interface MedicalCertificateProps {
   appointmentId: number;

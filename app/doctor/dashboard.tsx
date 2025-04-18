@@ -8,7 +8,7 @@ import { Avatar, Button, Card, Divider, Text } from "react-native-paper";
 import { getAvatarSource } from "../../helper/avatarGenerator";
 import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
 import colors from "../theme/colors";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 const getData = async (key: string) => {
   if (Platform.OS === "web") {
@@ -57,18 +57,17 @@ export default function DoctorDashboard() {
   const fetchAppointments = async () => {
     try {
       const token = await getData("authToken");
-        if (!token) {
-          console.error("No authentication token found.");
-          return;
-        }
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
       // Fetch doctor profile
       const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      const { userId,name } = profileResponse.data; // Extract userId
-      console.log("User ID:", userId);
+      const { userId, name } = profileResponse.data;
       const response = await axios.get(`${API_URL}/api/appointments/doctor`, {
         headers: {
           Authorization: `Bearer ${token}`,

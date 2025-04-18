@@ -3,7 +3,7 @@ import { Alert, Platform, ScrollView, StyleSheet, View } from "react-native";
 import { TextInput, Button, Text, IconButton } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { auth } from "../../configs/firebaseConfig";
 import colors from "../theme/colors";
 
 const ForgotPasswordScreen: React.FC = () => {

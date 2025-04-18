@@ -8,8 +8,8 @@ import React, { useEffect, useState } from "react";
 import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Badge, Card, Text } from "react-native-paper";
 import colors from "../theme/colors";
+import { API_URL } from "@/configs/config";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const getData = async (key: string) => {
   if (Platform.OS === "web") {
     // Use localStorage for web
@@ -37,11 +37,12 @@ export default function History() {
           Authorization: `Bearer ${token}`,
         },
       });
-      const { userId,name } = profileResponse.data; // Extract userId
+      const { userId, name } = profileResponse.data; // Extract userId
       console.log("User ID:", userId);
       try {
         const response = await axios.get(
-          `${API_URL}/api/appointments/patient`, {
+          `${API_URL}/api/appointments/patient`,
+          {
             headers: {
               Authorization: `Bearer ${token}`,
             },

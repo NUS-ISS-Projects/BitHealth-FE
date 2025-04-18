@@ -15,7 +15,7 @@ import { Avatar, Button, Text, TextInput } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import colors from "../theme/colors";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 export default function DoctorSettings() {
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -171,7 +171,7 @@ export default function DoctorSettings() {
           </TouchableOpacity>
         </View>
         <TextInput
-          label="Full Name"
+          label='Full Name'
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
@@ -182,7 +182,7 @@ export default function DoctorSettings() {
           }}
         />
         <TextInput
-          label="Specialty"
+          label='Specialty'
           value={specialty}
           onChangeText={setSpecialty}
           style={styles.input}
@@ -193,10 +193,10 @@ export default function DoctorSettings() {
           }}
         />
         <TextInput
-          label="Email"
+          label='Email'
           value={email}
           onChangeText={setEmail}
-          keyboardType="email-address"
+          keyboardType='email-address'
           style={styles.input}
           theme={{
             colors: {
@@ -207,7 +207,7 @@ export default function DoctorSettings() {
 
         {/* Save Button */}
         <Button
-          mode="contained"
+          mode='contained'
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
@@ -217,7 +217,7 @@ export default function DoctorSettings() {
 
         {/* Logout Button */}
         <Button
-          mode="outlined"
+          mode='outlined'
           style={styles.logoutButton}
           labelStyle={styles.logoutButtonText}
           onPress={handleLogout}

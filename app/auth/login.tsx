@@ -1,4 +1,4 @@
-import { auth } from "@/firebaseConfig";
+import { auth } from "@/configs/firebaseConfig";
 import { FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -22,7 +22,7 @@ import colors from "../theme/colors";
 import * as Google from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL, GOOGLE_WEB_CLIENT_ID } from "../../configs/config";
 import axios from "axios";
 
 // Store data securely
@@ -43,10 +43,9 @@ const LoginScreen = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
-  // Configure Google Auth Request
   const [googleRequest, googleResponse, googlePromptAsync] =
     Google.useAuthRequest({
-      webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+      webClientId: GOOGLE_WEB_CLIENT_ID,
       responseType: "id_token",
     });
 
@@ -244,11 +243,6 @@ const LoginScreen = () => {
         }}
         textColor={colors.primary}
       />
-      {/* Forgot Password Link */}
-      <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
-        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-      </TouchableOpacity>
-
       {/* Forgot Password Link */}
       <TouchableOpacity onPress={() => router.push("/auth/forgot-password")}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>

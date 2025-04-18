@@ -15,7 +15,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import colors from "../theme/colors";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { Alert } from "react-native";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+import { API_URL } from "@/configs/config";
 
 interface DetailRowProps {
   icon: keyof typeof FontAwesome.glyphMap;
