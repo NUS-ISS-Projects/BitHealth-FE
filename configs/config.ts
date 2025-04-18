@@ -16,3 +16,5 @@ export const FIREBASE_MEASUREMENT_ID =
   Constants.expoConfig?.extra?.firebaseMeasurementId ?? "";
 export const GOOGLE_WEB_CLIENT_ID =
   Constants.expoConfig?.extra?.webClientId ?? "";
+export const GOOGLE_ANDROID_CLIENT_ID =
+  Constants.expoConfig?.extra?.androidClientId ?? "";

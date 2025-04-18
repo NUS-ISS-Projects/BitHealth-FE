@@ -2,10 +2,11 @@
   "expo": {
     "name": "BitHealth",
     "slug": "bithealth",
+    "owner": "jonggietechie",
+    "scheme": "myapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/bithealth-logo.png",
-    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -47,7 +48,6 @@
       "eas": {
         "projectId": "80017a62-6f5b-48f2-ad03-e39307ef68ac"
       }
-    },
-    "owner": "jonggietechie"
+    }
   }
 }
