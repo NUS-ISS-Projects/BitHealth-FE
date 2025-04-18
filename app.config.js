@@ -13,5 +13,8 @@ export default ({ config }) => ({
     firebaseAppId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
     firebaseMeasurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
     webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+    eas: {
+      projectId: "80017a62-6f5b-48f2-ad03-e39307ef68ac",
+    },
   },
 });
