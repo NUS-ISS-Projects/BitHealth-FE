@@ -1,95 +1,97 @@
-import React, { useState } from "react";
-import { View, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
-import { IconButton, Text, Button, Avatar, Card } from "react-native-paper";
-import {
-  useRoute,
-  useNavigation,
-  NavigationProp,
-} from "@react-navigation/native";
+import { NavigationProp, useNavigation, useRoute } from "@react-navigation/native";
+import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { Platform, ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Avatar, Button, Card, IconButton, Text } from "react-native-paper";
 import colors from "../theme/colors";
 
-const doctors = [
-  {
-    id: 1,
-    name: "Dr. Budi Sound",
-    specialty: "Aesthetic Doctor",
-    reviews: 780,
-    image: null,
-  },
-  {
-    id: 2,
-    name: "Dr. Sober Roam",
-    specialty: "Aesthetic Doctor",
-    reviews: 422,
-    image: null,
-  },
-  {
-    id: 3,
-    name: "Dr. Anastasia Satset",
-    specialty: "Aesthetic Doctor",
-    reviews: 128,
-    image: null,
-  },
-  {
-    id: 4,
-    name: "Dr. Eni Teri",
-    specialty: "Aesthetic Doctor",
-    reviews: 76,
-    image: null,
-  },
-  {
-    id: 5,
-    name: "Dr. Widi Striker",
-    specialty: "Aesthetic Doctor",
-    reviews: 45,
-    image: null,
-  },
-  {
-    id: 6,
-    name: "Dr. Goh",
-    specialty: "Aesthetic Doctor",
-    reviews: 45,
-    image: null,
-  },
-  {
-    id: 7,
-    name: "Dr. Tan",
-    specialty: "Aesthetic Doctor",
-    reviews: 45,
-    image: null,
-  },
-];
+type Doctor = {
+  doctorId: number;
+  specialization: string;
+  avatar?: string;
+  user: {
+    name: string;
+  };
+};
 
 type BookScreenParams = {
   reason: string;
   checkupType: string;
 };
 
-const getAvatarSource = (doctor: (typeof doctors)[0]) => {
-  if (doctor.image) {
-    return doctor.image;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
+
+const getData = async (key: string): Promise<string | null> => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
+const getAvatarSource = (doctor: Doctor) => {
+  if (doctor.avatar) {
+    return { uri: doctor.avatar };
   }
   // Generate a random avatar using UI Avatars service
-  return { uri: `https://i.pravatar.cc/50?img=${doctor.id}` };
+  return { uri: `https://i.pravatar.cc/50?img=${doctor.doctorId}` };
 };
 
 export default function SelectDoctor() {
-  const [selectedDoctor, setSelectedDoctor] = useState<
-    (typeof doctors)[0] | null
-  >(null);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const navigation = useNavigation<NavigationProp<any>>();
   const route = useRoute();
-  const { reason, checkupType } = route.params as BookScreenParams;
+  const { reason, checkupType } = (route.params || {}) as Partial<BookScreenParams>;
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const authToken = await getData("authToken");
+        if (!authToken) {
+          console.error("No authentication token found.");
+          return;
+        }
+        setToken(authToken);
+
+        const response = await axios.get(`${API_URL}/api/doctors`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+
+        console.log("Response from API:", response.data); // Debugging
+
+        const transformedDoctors = response.data.map((doctor: any) => ({
+          doctorId: doctor.doctorId,
+          specialization: doctor.specialization,
+          avatar: doctor.avatar,
+          user: {
+            name: doctor.user.name, // Extract name from the nested user object
+          },
+        }));
+
+        console.log("Transformed Doctors:", transformedDoctors); // Debugging
+        setDoctors(transformedDoctors);
+      } catch (error) {
+        console.error("Error fetching doctors:", error);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const handleNext = () => {
     if (selectedDoctor) {
       navigation.navigate("AppointmentDate", {
-        doctorId: selectedDoctor.id,
-        doctorName: selectedDoctor.name,
-        specialty: selectedDoctor.specialty,
-        reason: reason,
-        checkupType: checkupType,
+        doctorId: selectedDoctor.doctorId,
+        doctorName: selectedDoctor.user.name,
+        specialty: selectedDoctor.specialization,
+        reason: reason || "Unknown Reason",
+        checkupType: checkupType || "Unknown Checkup Type",
         isRescheduling: false,
       });
     }
@@ -102,10 +104,10 @@ export default function SelectDoctor() {
     >
       <View style={styles.headerBarContainer}>
         <IconButton
-          mode='contained'
-          icon='arrow-left'
-          iconColor='#123D1F'
-          containerColor='white'
+          mode="contained"
+          icon="arrow-left"
+          iconColor="#123D1F"
+          containerColor="white"
           size={18}
           onPress={() => navigation.goBack()}
         />
@@ -123,13 +125,12 @@ export default function SelectDoctor() {
         </View>
       </View>
 
-      {/* Doctor List */}
       <ScrollView style={styles.listContainer}>
         {doctors.map((doctor) => {
-          const isSelected = selectedDoctor?.id === doctor.id;
+          const isSelected = selectedDoctor?.doctorId === doctor.doctorId;
           return (
             <TouchableOpacity
-              key={doctor.id}
+              key={doctor.doctorId} // Add the key here
               onPress={() => setSelectedDoctor(doctor)}
             >
               <Card style={[styles.card, isSelected && styles.selectedCard]}>
@@ -142,7 +143,7 @@ export default function SelectDoctor() {
                         isSelected && styles.selectedDoctorName,
                       ]}
                     >
-                      {doctor.name}
+                      {doctor.user.name || "Unknown Doctor"} {/* Fallback for missing name */}
                     </Text>
                     <View style={{ flexDirection: "row" }}>
                       <Text
@@ -151,7 +152,7 @@ export default function SelectDoctor() {
                           isSelected && styles.selectedSpecialty,
                         ]}
                       >
-                        {doctor.specialty}
+                        {doctor.specialization || "Unknown Specialty"}
                       </Text>
                     </View>
                   </View>
@@ -165,7 +166,7 @@ export default function SelectDoctor() {
       {/* Next Button */}
       <View style={styles.buttonContainer}>
         <Button
-          mode='contained'
+          mode="contained"
           style={styles.nextButton}
           labelStyle={styles.nextButtonText}
           onPress={handleNext}
@@ -181,11 +182,6 @@ export default function SelectDoctor() {
 const styles = StyleSheet.create({
   gradientContainer: {
     flex: 1,
-    padding: 20,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.primary,
     padding: 20,
   },
   headerBarContainer: {
