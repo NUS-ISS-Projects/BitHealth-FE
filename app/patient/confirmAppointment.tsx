@@ -81,7 +81,7 @@ export default function ConfirmAppointment() {
           }
         );
         // Extract userId
-        const { userId } = profileResponse.data; // Extract userId and patientId
+        const { userId } = profileResponse.data;
         setUserId(userId);
 
         // Fetch patient profile
@@ -96,8 +96,6 @@ export default function ConfirmAppointment() {
 
         const { patientId } = patientProfileResponse.data;
         setPatientId(patientId);
-        console.log("User ID:", userId);
-        console.log("Patient ID:", patientId);
       } catch (error) {
         console.error("Failed to fetch token or profile:", error);
       }
@@ -149,7 +147,6 @@ export default function ConfirmAppointment() {
           reason_for_visit: checkupType,
           comment: reason || "",
         };
-        console.log(appointmentData);
         const response = await axios.post(
           `${API_URL}/api/appointments`,
           appointmentData,

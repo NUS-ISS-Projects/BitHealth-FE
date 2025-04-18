@@ -1,5 +1,4 @@
 import Constants from "expo-constants";
-console.log("EXPO CONFIG:", Constants.expoConfig?.extra);
 
 export const API_URL = Constants.expoConfig?.extra?.apiUrl ?? "";
 export const FIREBASE_API_KEY =

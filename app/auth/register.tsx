@@ -68,12 +68,10 @@ const RegisterScreen = () => {
         role: userType === "doctor" ? "DOCTOR" : "PATIENT",
         firebaseUid: user.uid,
       };
-      console.log(payload);
       const response = await axios.post(
         `${API_URL}/api/users/register`,
         payload
       );
-      console.log(response);
       if (!response.data) {
         throw new Error("Registration failed on backend.");
       }

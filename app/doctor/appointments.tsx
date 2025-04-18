@@ -36,14 +36,6 @@ export default function DoctorAppointmentsScreen() {
       console.error("No authentication token found.");
       return;
     }
-    // Fetch doctor profile
-    const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const { userId, name } = profileResponse.data; // Extract userId
-    console.log("User ID:", userId);
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/appointments/doctor`, {

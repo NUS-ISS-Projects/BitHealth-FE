@@ -44,7 +44,7 @@ export default function PatientHome() {
             },
           }
         );
-        const { name } = profileResponse.data; // Extract user name
+        const { name } = profileResponse.data;
         setUserName(name);
 
         // Fetch appointments

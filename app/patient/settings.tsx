@@ -39,11 +39,9 @@ export default function PatientSettings() {
       if (Platform.OS === "web") {
         // Use localStorage for web
         localStorage.removeItem("authToken");
-        console.log("Token cleared from localStorage (web)");
       } else {
         // Use SecureStore for mobile
         await SecureStore.deleteItemAsync("authToken");
-        console.log("Token cleared from SecureStore (mobile)");
       }
     } catch (error) {
       console.error("Error clearing auth token:", error);

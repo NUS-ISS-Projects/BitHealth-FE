@@ -162,7 +162,6 @@ export default function MedicalCertificateScreen() {
         );
         if (response.status === 200) {
           setCertificate(response.data);
-          console.log("Certificate updated.");
           showAlert("Success", "MC updated successfully.");
           fetchMedicalCertificate();
         }
@@ -186,7 +185,6 @@ export default function MedicalCertificateScreen() {
         if (response.status === 200 || response.status === 201) {
           setCertificate(response.data);
           showAlert("Success", "MC created successfully.");
-          console.log("Certificate created.");
           fetchMedicalCertificate();
         }
       } catch (error) {

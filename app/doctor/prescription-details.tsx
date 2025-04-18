@@ -169,7 +169,6 @@ export default function PrescriptionDetailsScreen() {
         );
         if (response.status === 200) {
           setPrescription(response.data);
-          console.log("Prescription updated.");
           showAlert("Success", "Prescription updated successfully.");
           fetchPrescription();
         }
@@ -188,7 +187,6 @@ export default function PrescriptionDetailsScreen() {
         if (response.status === 200 || response.status === 201) {
           setPrescription(response.data);
           showAlert("Success", "Prescription created successfully.");
-          console.log("Prescription created.");
           fetchPrescription();
         }
       } catch (error) {
