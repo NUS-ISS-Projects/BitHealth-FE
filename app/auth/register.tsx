@@ -43,7 +43,8 @@ const RegisterScreen = () => {
     Google.useAuthRequest({
       webClientId: GOOGLE_WEB_CLIENT_ID,
       androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-      responseType: "id_token",
+      responseType: Platform.OS === "web" ? "id_token" : "code",
+      scopes: ["profile", "email"],
     });
 
   const storeData = async (key: string, value: string) => {
