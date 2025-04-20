@@ -4,7 +4,7 @@ import {
   useRoute,
 } from "@react-navigation/native";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { Avatar, Button, Card, IconButton, Text } from "react-native-paper";
 import {
   DatePickerModal,
@@ -40,23 +40,41 @@ export default function AppointmentDate() {
     currentDate,
     currentTime,
   } = route.params as AppointmentParams;
+
   const navigation = useNavigation<NavigationProp<any>>();
+
   const [date, setDate] = useState<Date | null>(
     isRescheduling && currentDate
       ? new Date(Array.isArray(currentDate) ? currentDate[0] : currentDate)
       : null
   );
+
+  const normalizeTime = (inputTime: string | number[] | undefined): string | null => {
+    if (!inputTime) return null;
+
+    if (typeof inputTime === "string") {
+      const [hours, minutes] = inputTime.split(":").map(Number);
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+      }
+    } else if (Array.isArray(inputTime)) {
+      const [hours, minutes] = inputTime;
+      if (!isNaN(hours) && !isNaN(minutes)) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+      }
+    }
+
+    return null;
+  };
+
   const [time, setTime] = useState<string | null>(
-    isRescheduling
-      ? typeof currentTime === "string"
-        ? currentTime
-        : Array.isArray(currentTime)
-        ? String(currentTime[0])
-        : null
-      : null
+    isRescheduling ? normalizeTime(currentTime) : null
   );
   const [openDatePicker, setOpenDatePicker] = useState(false);
-  const [openTimePicker, setOpenTimePicker] = useState(false);
+
+  // State for web-specific time picker
+  const [webTime, setWebTime] = useState<string | null>(null);
+  const isWeb = Platform.OS === "web";
 
   const headerText = isRescheduling
     ? "Reschedule Appointment"
@@ -67,15 +85,7 @@ export default function AppointmentDate() {
     setDate(params.date);
   };
 
-  const handleTimeConfirm = (params: any) => {
-    setOpenTimePicker(false);
-    setTime(
-      `${params.hours}:${params.minutes < 10 ? "0" : ""}${params.minutes}`
-    );
-  };
-
   const handleNext = () => {
-    // Format date to YYYY-MM-DD
     const formattedDate = date
       ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
           2,
@@ -83,8 +93,12 @@ export default function AppointmentDate() {
         )}-${String(date.getDate()).padStart(2, "0")}`
       : null;
 
-    // Format time to HH:mm:ss
-    const formattedTime = time ? `${time}:00` : null;
+    const formattedTime = isWeb ? webTime : time;
+
+    if (!formattedDate || !formattedTime) {
+      console.error("Invalid date or time");
+      return;
+    }
 
     if (isRescheduling) {
       navigation.navigate("ConfirmAppointment", {
@@ -110,31 +124,20 @@ export default function AppointmentDate() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* Header Bar */}
       <View style={styles.headerBarContainer}>
         <IconButton
-          mode='contained'
-          icon='arrow-left'
-          iconColor='#123D1F'
-          containerColor='white'
+          mode="contained"
+          icon="arrow-left"
+          iconColor={colors.primary}
+          containerColor="white"
           size={18}
           onPress={() => navigation.goBack()}
         />
         <Text style={styles.headerBar}>{headerText}</Text>
       </View>
-      {/* Header */}
-      {!isRescheduling && (
-        <View style={styles.headerContainer}>
-          <View>
-            <Text style={styles.header}>When</Text>
-            <Text style={styles.header}>are you free?</Text>
-          </View>
-          <View style={styles.progressContainer}>
-            <Text style={styles.progressText}>3/4</Text>
-          </View>
-        </View>
-      )}
 
-      {/* Doctor Card */}
+      {/* Doctor Information Card */}
       <Card style={styles.card}>
         <Card.Content>
           <View style={styles.doctorContainer}>
@@ -146,21 +149,19 @@ export default function AppointmentDate() {
               <Text style={styles.doctorName}>
                 {doctorName || "Dr. Budi Sound"}
               </Text>
-              <View style={{ flexDirection: "row" }}>
-                <Text style={styles.specialty}>{specialty}</Text>
-              </View>
+              <Text style={styles.specialty}>{specialty}</Text>
             </View>
           </View>
         </Card.Content>
       </Card>
 
-      {/* Date Selection */}
+      {/* Date Picker Section */}
       <View style={styles.dateContainer}>
         <View style={{ marginBottom: 10 }}>
           <Text style={styles.label}>📅 Select a date here</Text>
         </View>
         <Button
-          mode='outlined'
+          mode="outlined"
           onPress={() => setOpenDatePicker(true)}
           style={styles.dateButton}
           labelStyle={styles.dateButtonText}
@@ -169,45 +170,65 @@ export default function AppointmentDate() {
         </Button>
       </View>
 
-      {/* Time Selection */}
+      {/* Time Picker Section */}
       <View style={styles.dateContainer}>
         <View style={{ marginBottom: 10 }}>
           <Text style={styles.label}>⏰ Select a time here</Text>
         </View>
-        <Button
-          mode='outlined'
-          onPress={() => setOpenTimePicker(true)}
-          style={styles.dateButton}
-          labelStyle={styles.dateButtonText}
-        >
-          {time ? time : "Pick a Time"}
-        </Button>
+        {isWeb ? (
+          <input
+            type="time"
+            value={webTime || ""}
+            onChange={(e) => setWebTime(e.target.value)}
+            style={styles.webTimeInput}
+          />
+        ) : (
+          <Button
+            mode="outlined"
+            onPress={() => setOpenDatePicker(true)}
+            style={styles.dateButton}
+            labelStyle={styles.dateButtonText}
+          >
+            {time ? time : "Pick a Time"}
+          </Button>
+        )}
       </View>
 
       {/* Date Picker Modal */}
       <DatePickerModal
-        locale='en'
-        mode='single'
+        locale="en"
+        mode="single"
         visible={openDatePicker}
         onDismiss={() => setOpenDatePicker(false)}
         date={date || new Date()}
         onConfirm={handleDateConfirm}
       />
 
-      {/* Time Picker Modal */}
-      <TimePickerModal
-        visible={openTimePicker}
-        onDismiss={() => setOpenTimePicker(false)}
-        onConfirm={handleTimeConfirm}
-      />
+      {/* Time Picker Modal (Mobile Only) */}
+      {!isWeb && (
+        <TimePickerModal
+          visible={openDatePicker}
+          onDismiss={() => setOpenDatePicker(false)}
+          onConfirm={(params) => {
+            const { hours, minutes } = params;
+            if (!isNaN(hours) && !isNaN(minutes)) {
+              const normalizedTime = `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+              setTime(normalizedTime);
+            } else {
+              console.error("Invalid time selected");
+            }
+          }}
+        />
+      )}
+
       {/* Next Button */}
       <View style={{ paddingVertical: 5 }}></View>
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.nextButton}
         labelStyle={styles.nextButtonText}
         onPress={handleNext}
-        disabled={!date || !time}
+        disabled={!date || (!time && !webTime)}
       >
         {isRescheduling ? "Confirm New Schedule" : "Next"}
       </Button>
@@ -227,33 +248,10 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   headerBar: {
-    fontSize: 15,
-    fontWeight: "regular",
-    color: colors.primary,
-    paddingLeft: 40,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: colors.primary,
-  },
-  progressContainer: {
-    alignSelf: "flex-end",
-    backgroundColor: colors.primary,
-    paddingVertical: 5,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  progressText: {
-    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "500",
+    color: colors.primary,
+    paddingLeft: 50,
   },
   card: {
     backgroundColor: colors.cardBackground,
@@ -270,28 +268,14 @@ const styles = StyleSheet.create({
     marginLeft: 15,
   },
   doctorName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
     color: colors.textPrimary,
+    marginBottom: 4,
   },
   specialty: {
     fontSize: 14,
     color: colors.textSecondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E5E5E5",
-    marginVertical: 5,
-  },
-  value: {
-    fontSize: 12,
-    color: colors.textPrimary,
-    fontWeight: "bold",
-  },
-  directions: {
-    fontSize: 12,
-    color: "#007AFF",
-    textDecorationLine: "underline",
   },
   dateContainer: {
     marginBottom: 20,
@@ -321,5 +305,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#FFFFFF",
+  },
+  webTimeInput: {
+    width: "100%",
+    padding: 10,
+    fontSize: 16,
+    borderColor: colors.primary, // Match the dateButton's border color
+    borderWidth: 1, // Match the dateButton's border width
+    borderRadius: 50, // Match the dateButton's border radius
+    color: colors.textPrimary, // Ensure text color matches
+    backgroundColor: "white", // Optional: Ensure background matches
   },
 });
