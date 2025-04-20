@@ -95,11 +95,11 @@ const RegisterScreen = () => {
 
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
-    let idToken: string;
     try {
-      const result = await webPrompt();
-      if (result.type !== "success") return;
+      let idToken: string;
       if (Platform.OS === "web") {
+        const result = await webPrompt();
+        if (result.type !== "success") return;
         idToken = result.params.id_token!;
       } else {
         await GoogleSignin.hasPlayServices({
