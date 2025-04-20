@@ -2,15 +2,6 @@ import "dotenv/config";
 
 export default ({ config }) => ({
   ...config,
-  scheme: "myapp",
-  android: {
-    ...config.android,
-    googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
-  },
-  ios: {
-    ...config.ios,
-    googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
-  },
   plugins: [
     ...(config.plugins || []),
     [
@@ -22,6 +13,16 @@ export default ({ config }) => ({
       },
     ],
   ],
+  android: {
+    ...config.android,
+    googleServicesFile:
+      process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
+  },
+  ios: {
+    ...config.ios,
+    googleServicesFile:
+      process.env.GOOGLE_SERVICES_JSON || "./GoogleService-Info.plist",
+  },
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL,
     firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
