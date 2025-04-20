@@ -1,3 +1,4 @@
+import { API_URL } from "@/configs/config";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { isAfter, isBefore, isEqual, parseISO } from "date-fns";
@@ -8,14 +9,11 @@ import { Avatar, Button, Card, Text } from "react-native-paper";
 import { getAvatarSource } from "../../helper/avatarGenerator";
 import { formatDate, formatTime } from "../../helper/dateTimeFormatter";
 import colors from "../theme/colors";
-import { API_URL } from "@/configs/config";
 
 const getData = async (key: string) => {
   if (Platform.OS === "web") {
-    // Use localStorage for web
     return localStorage.getItem(key);
   } else {
-    // Use expo-secure-store for mobile
     return await SecureStore.getItemAsync(key);
   }
 };
@@ -36,14 +34,9 @@ export default function PatientHome() {
         }
 
         // Fetch patient profile
-        const profileResponse = await axios.get(
-          `${API_URL}/api/users/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const { name } = profileResponse.data;
         setUserName(name);
 
@@ -51,9 +44,7 @@ export default function PatientHome() {
         const appointmentsResponse = await axios.get(
           `${API_URL}/api/appointments/patient`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         const data = appointmentsResponse.data;
@@ -62,11 +53,7 @@ export default function PatientHome() {
         const now = new Date();
 
         // Helper function to parse appointment date and time
-        const parseAppointmentDateTime = (appointment: {
-          status?: string;
-          appointmentDate?: any;
-          appointmentTime?: any;
-        }) => {
+        const parseAppointmentDateTime = (appointment: any) => {
           const date = parseISO(appointment.appointmentDate);
           const timeParts = appointment.appointmentTime.split(":").map(Number);
           return new Date(
@@ -79,7 +66,7 @@ export default function PatientHome() {
         };
 
         // Filter appointments
-        const upcoming = data.filter((apt: { status: string }) => {
+        const upcoming = data.filter((apt: any) => {
           const appointmentDateTime = parseAppointmentDateTime(apt);
           return (
             isAfter(appointmentDateTime, now) ||
@@ -99,11 +86,32 @@ export default function PatientHome() {
         console.error("Error fetching data:", error);
       }
     }
-
     fetchAppointments();
   }, []);
 
   const hasUpcoming = upcomingAppointments.length > 0;
+
+  // StatusBadge Component
+  const StatusBadge = ({ status }: { status: string }) => {
+    const getStatusColor = () => {
+      switch (status) {
+        case "Completed":
+          return "#4CAF50";
+        case "Upcoming":
+          return colors.primary;
+        case "Cancelled":
+          return "#757575";
+        default:
+          return "#757575";
+      }
+    };
+
+    return (
+      <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
+        <Text style={styles.statusText}>{status}</Text>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -114,15 +122,17 @@ export default function PatientHome() {
             source={require("../../assets/images/bithealth-logo.png")}
             style={styles.logo}
           />
-          <Text variant='titleMedium' style={styles.title}>
+          <Text variant="titleMedium" style={styles.title}>
             BitHealth
           </Text>
         </View>
+
+        {/* Greeting Section */}
         <View style={styles.greetingContainer}>
-          <Text variant='titleSmall' style={styles.greetingText}>
+          <Text variant="titleSmall" style={styles.greetingText}>
             Hello,
           </Text>
-          <Text variant='titleLarge' style={styles.userName}>
+          <Text variant="titleLarge" style={styles.userName}>
             {userName} 👋
           </Text>
         </View>
@@ -131,7 +141,7 @@ export default function PatientHome() {
         {hasUpcoming ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text variant='titleMedium' style={styles.sectionTitle}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
                 Upcoming Appointments
               </Text>
             </View>
@@ -139,7 +149,11 @@ export default function PatientHome() {
               <Card
                 key={index}
                 style={styles.appointmentCard}
-                onPress={() => navigation.navigate("AppointmentDetails")}
+                onPress={() =>
+                  navigation.navigate("AppointmentDetails", {
+                    appointmentId: appointment.appointmentId,
+                  })
+                }
               >
                 <Card.Content style={styles.appointmentCardContent}>
                   <Avatar.Image
@@ -148,16 +162,19 @@ export default function PatientHome() {
                   />
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
-                      <Text variant='titleSmall' style={styles.doctorName}>
+                      <Text variant="titleSmall" style={styles.doctorName}>
                         {appointment.doctor.user.name}
                       </Text>
                     </View>
-                    <Text variant='bodySmall' style={styles.appointmentReason}>
+                    <Text
+                      variant="bodySmall"
+                      style={styles.appointmentReason}
+                    >
                       {appointment.reasonForVisit}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
-                        variant='labelMedium'
+                        variant="labelMedium"
                         style={styles.appointmentDate}
                       >
                         {formatDate(appointment.appointmentDate)},{" "}
@@ -165,11 +182,15 @@ export default function PatientHome() {
                       </Text>
                     </View>
                   </View>
+                  {/* Status Badge */}
+                  <View style={styles.statusContainer}>
+                    <StatusBadge status={appointment.status} />
+                  </View>
                 </Card.Content>
               </Card>
             ))}
             <Button
-              mode='contained'
+              mode="contained"
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
               onPress={() => navigation.navigate("Reason")}
@@ -184,15 +205,15 @@ export default function PatientHome() {
                 source={require("../../assets/images/patient-home.png")}
                 style={styles.bookingImage}
               />
-              <Text variant='titleMedium' style={styles.bookingTitle}>
+              <Text variant="titleMedium" style={styles.bookingTitle}>
                 No booking schedule
               </Text>
-              <Text variant='bodyMedium' style={styles.bookingDescription}>
+              <Text variant="bodyMedium" style={styles.bookingDescription}>
                 Seems like you do not have any appointment scheduled today.
               </Text>
               <View>
                 <Button
-                  mode='contained'
+                  mode="contained"
                   style={styles.bookButton}
                   labelStyle={{ color: "white" }}
                   onPress={() => navigation.navigate("Reason")}
@@ -206,7 +227,7 @@ export default function PatientHome() {
 
         {/* Recent Appointments */}
         <View style={styles.sectionHeader}>
-          <Text variant='titleMedium' style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
             Recent Appointments
           </Text>
         </View>
@@ -214,25 +235,33 @@ export default function PatientHome() {
           <Card
             key={index}
             style={styles.appointmentCard}
-            onPress={() => navigation.navigate("AppointmentDetails")}
+            onPress={() =>
+              navigation.navigate("AppointmentDetails", {
+                appointmentId: appointment.appointmentId,
+              })
+            }
           >
             <Card.Content style={styles.appointmentCardContent}>
               <Avatar.Image size={50} source={getAvatarSource(appointment)} />
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
-                  <Text variant='titleSmall' style={styles.doctorName}>
+                  <Text variant="titleSmall" style={styles.doctorName}>
                     {appointment.doctor.user.name}
                   </Text>
                 </View>
-                <Text variant='bodySmall' style={styles.appointmentReason}>
+                <Text variant="bodySmall" style={styles.appointmentReason}>
                   {appointment.reasonForVisit}
                 </Text>
                 <View style={styles.timeContainer}>
-                  <Text variant='labelMedium' style={styles.appointmentDate}>
+                  <Text variant="labelMedium" style={styles.appointmentDate}>
                     {formatDate(appointment.appointmentDate)},{" "}
                     {formatTime(appointment.appointmentTime)}
                   </Text>
                 </View>
+              </View>
+              {/* Status Badge */}
+              <View style={styles.statusContainer}>
+                <StatusBadge status={appointment.status} />
               </View>
             </Card.Content>
           </Card>
@@ -345,5 +374,20 @@ const styles = StyleSheet.create({
   appointmentTime: {
     color: colors.textSecondary,
     fontSize: 12,
+  },
+  statusContainer: {
+    marginTop: 10,
+    alignItems: "flex-end", // Align the badge to the right-bottom corner
+  },
+  statusBadge: {
+    borderRadius: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    alignSelf: "flex-start",
+  },
+  statusText: {
+    fontSize: 12,
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
 });
