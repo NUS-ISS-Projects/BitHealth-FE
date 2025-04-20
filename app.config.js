@@ -2,6 +2,26 @@ import "dotenv/config";
 
 export default ({ config }) => ({
   ...config,
+  scheme: "myapp",
+  android: {
+    ...config.android,
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+  },
+  ios: {
+    ...config.ios,
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+  },
+  plugins: [
+    ...(config.plugins || []),
+    [
+      "@react-native-google-signin/google-signin",
+      {
+        scopes: ["email", "profile"],
+        webClientId: process.env.EXPO_PUBLIC_WEBCLIENT,
+        iosUrlScheme: process.env.EXPO_PUBLIC_IOS_URL_SCHEME,
+      },
+    ],
+  ],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL,
     firebaseApiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,

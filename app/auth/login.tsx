@@ -20,13 +20,10 @@ import {
 import { Button, IconButton, Text, TextInput } from "react-native-paper";
 import colors from "../theme/colors";
 import * as Google from "expo-auth-session/providers/google";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
-import {
-  API_URL,
-  GOOGLE_WEB_CLIENT_ID,
-  GOOGLE_ANDROID_CLIENT_ID,
-} from "../../configs/config";
+import { API_URL, GOOGLE_WEB_CLIENT_ID } from "../../configs/config";
 import axios from "axios";
 
 // Store data securely
@@ -47,13 +44,10 @@ const LoginScreen = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const router = useRouter();
   const { userType } = useLocalSearchParams();
-  const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest({
-      webClientId: GOOGLE_WEB_CLIENT_ID,
-      androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-      responseType: Platform.OS === "web" ? "id_token" : "code",
-      scopes: ["profile", "email"],
-    });
+  const [webReq, webRes, webPrompt] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    responseType: "id_token",
+  });
 
   // Handle Email/Password Login
   const handleLogin = async () => {
@@ -108,81 +102,60 @@ const LoginScreen = () => {
 
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
+    let idToken: string;
     try {
-      const result = await googlePromptAsync();
-      if (result.type === "success") {
-        const { id_token } = result.params;
-        const credential = GoogleAuthProvider.credential(id_token);
-        const userCredential = await signInWithCredential(auth, credential);
-        const user = userCredential.user;
-        const idToken = await user.getIdToken();
-        storeData("authToken", idToken);
-
-        // Fetch the user profile from the backend
-        const response = await fetch(`${API_URL}/api/users/profile`, {
-          headers: { Authorization: `Bearer ${idToken}` },
-        });
-        let localUser;
-        // Check if the user exists in the backend, If not, register the user
-        if (response.ok) {
-          localUser = await response.json();
-        } else if (response.status === 404) {
-          const payload = {
-            name: user.displayName || "",
-            email: user.email || "",
-            role: userType === "doctor" ? "DOCTOR" : "PATIENT",
-            firebaseUid: user.uid,
-          };
-          const regResponse = await axios.post(
-            `${API_URL}/api/users/register`,
-            payload
-          );
-          localUser = regResponse.data;
-        } else {
-          throw new Error("Failed to fetch user profile");
-        }
-
-        if (userType === "doctor" && localUser.role !== "DOCTOR") {
-          if (Platform.OS === "web") {
-            window.alert(
-              "Access Denied! This account is not a doctor account."
-            );
-          } else {
-            Alert.alert(
-              "Access Denied",
-              "This account is not a doctor account."
-            );
-          }
-          setLoading(false);
-          return;
-        } else if (userType === "patient" && localUser.role !== "PATIENT") {
-          if (Platform.OS === "web") {
-            window.alert(
-              "Access Denied! This account is not a patient account."
-            );
-          } else {
-            Alert.alert(
-              "Access Denied",
-              "This account is not a patient account."
-            );
-          }
-          setLoading(false);
-          return;
-        }
-
-        const destination =
-          userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
-        router.replace(destination);
-        WebBrowser.dismissBrowser();
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || "Google login error.";
+      const result = await webPrompt();
+      if (result.type !== "success") return;
       if (Platform.OS === "web") {
-        window.alert(errorMessage);
+        idToken = result.params.id_token!;
       } else {
-        Alert.alert("Error", errorMessage);
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
+        await GoogleSignin.signIn();
+        const tokens = await GoogleSignin.getTokens();
+        idToken = tokens.idToken;
       }
-      console.error("Google Login Error:", error.message);
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+      const firebaseToken = await user.getIdToken();
+      await storeData("authToken", firebaseToken);
+
+      const profileRes = await fetch(`${API_URL}/api/users/profile`, {
+        headers: { Authorization: `Bearer ${firebaseToken}` },
+      });
+      let localUser = profileRes.ok
+        ? await profileRes.json()
+        : (
+            await axios.post(`${API_URL}/api/users/register`, {
+              name: user.displayName,
+              email: user.email,
+              role: userType === "doctor" ? "DOCTOR" : "PATIENT",
+              firebaseUid: user.uid,
+            })
+          ).data;
+      if (
+        (userType === "doctor" && localUser.role !== "DOCTOR") ||
+        (userType === "patient" && localUser.role !== "PATIENT")
+      ) {
+        const msg = `Access Denied! This account is not a ${userType}.`;
+        Platform.OS === "web"
+          ? window.alert(msg)
+          : Alert.alert("Access Denied", msg);
+        return;
+      }
+
+      router.replace(
+        userType === "doctor" ? "/doctor/dashboard" : "/patient/home"
+      );
+      WebBrowser.dismissBrowser();
+    } catch (err: any) {
+      const message = err.message || "Google login error.";
+      Platform.OS === "web"
+        ? window.alert(message)
+        : Alert.alert("Error", message);
+      console.error("Google Login Error:", err);
     }
   };
 

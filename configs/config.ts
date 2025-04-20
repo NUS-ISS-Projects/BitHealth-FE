@@ -18,3 +18,4 @@ export const GOOGLE_WEB_CLIENT_ID =
   Constants.expoConfig?.extra?.webClientId ?? "";
 export const GOOGLE_ANDROID_CLIENT_ID =
   Constants.expoConfig?.extra?.androidClientId ?? "";
+export const IOS_URL_SCHEME = Constants.expoConfig?.extra?.iosUrlScheme ?? "";

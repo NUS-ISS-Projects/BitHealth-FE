@@ -20,14 +20,11 @@ import {
 import { auth } from "../../configs/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Google from "expo-auth-session/providers/google";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
 
-import {
-  API_URL,
-  GOOGLE_WEB_CLIENT_ID,
-  GOOGLE_ANDROID_CLIENT_ID,
-} from "@/configs/config";
+import { API_URL, GOOGLE_WEB_CLIENT_ID } from "@/configs/config";
 
 const RegisterScreen = () => {
   const [name, setName] = useState("");
@@ -39,13 +36,10 @@ const RegisterScreen = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   // Configure Google Auth
-  const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest({
-      webClientId: GOOGLE_WEB_CLIENT_ID,
-      androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-      responseType: Platform.OS === "web" ? "id_token" : "code",
-      scopes: ["profile", "email"],
-    });
+  const [webReq, webRes, webPrompt] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    responseType: "id_token",
+  });
 
   const storeData = async (key: string, value: string) => {
     if (Platform.OS === "web") {
@@ -101,52 +95,53 @@ const RegisterScreen = () => {
 
   // Handle Google Sign-In
   const handleGoogleSignIn = async () => {
+    let idToken: string;
     try {
-      const result = await googlePromptAsync();
-      if (result.type === "success") {
-        const { id_token } = result.params;
-
-        // Create a Google credential
-        const credential = GoogleAuthProvider.credential(id_token);
-
-        // Sign in with Firebase
-        const userCredential = await signInWithCredential(auth, credential);
-        const user = userCredential.user;
-        const idToken = await user.getIdToken();
-        storeData("authToken", idToken);
-        const payload = {
-          name: user.displayName || "",
-          email: user.email || "",
-          role: userType === "doctor" ? "DOCTOR" : "PATIENT",
-          firebaseUid: user.uid,
-        };
-
-        try {
-          await axios.post(`${API_URL}/api/users/register`, payload);
-        } catch (error: any) {
-          // If the error indicates the user is already registered, we ignore it.
-          if (!(error.response && error.response.status === 409)) {
-            throw error;
-          }
-        }
-        const destination =
-          userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
-        if (window.opener) {
-          window.opener.location.href = destination;
-          window.close();
-        } else {
-          router.replace(destination);
-        }
-        WebBrowser.dismissBrowser();
-      }
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to sign in with Google.";
+      const result = await webPrompt();
+      if (result.type !== "success") return;
       if (Platform.OS === "web") {
-        window.alert(errorMessage);
+        idToken = result.params.id_token!;
       } else {
-        Alert.alert("Error", errorMessage);
+        await GoogleSignin.hasPlayServices({
+          showPlayServicesUpdateDialog: true,
+        });
+        await GoogleSignin.signIn();
+        const tokens = await GoogleSignin.getTokens();
+        idToken = tokens.idToken;
       }
-      console.error("Google Sign-In Error:", error.message);
+
+      const credential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+      const firebaseToken = await user.getIdToken();
+      await storeData("authToken", firebaseToken);
+
+      const payload = {
+        name: user.displayName || "",
+        email: user.email || "",
+        role: userType === "doctor" ? "DOCTOR" : "PATIENT",
+        firebaseUid: user.uid,
+      };
+      try {
+        await axios.post(`${API_URL}/api/users/register`, payload);
+      } catch (e: any) {
+        if (!(e.response && e.response.status === 409)) throw e;
+      }
+      const destination =
+        userType === "doctor" ? "/doctor/dashboard" : "/patient/home";
+      if (Platform.OS === "web" && window.opener) {
+        window.opener.location.href = destination;
+        window.close();
+      } else {
+        router.replace(destination);
+      }
+
+      WebBrowser.dismissBrowser();
+    } catch (err: any) {
+      const msg = err.message || "Failed to sign in with Google.";
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Error", msg);
+      console.error("Google Sign-In Error:", err);
     }
   };
 
