@@ -23,7 +23,11 @@ import * as Google from "expo-auth-session/providers/google";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as WebBrowser from "expo-web-browser";
 WebBrowser.maybeCompleteAuthSession();
-import { API_URL, GOOGLE_WEB_CLIENT_ID } from "../../configs/config";
+import {
+  API_URL,
+  GOOGLE_WEB_CLIENT_ID,
+  GOOGLE_ANDROID_CLIENT_ID,
+} from "../../configs/config";
 import axios from "axios";
 
 // Store data securely
@@ -46,6 +50,7 @@ const LoginScreen = () => {
   const { userType } = useLocalSearchParams();
   const [webReq, webRes, webPrompt] = Google.useAuthRequest({
     webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
     responseType: "id_token",
   });
 

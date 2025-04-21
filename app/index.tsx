@@ -1,11 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { View, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Text, Button } from "react-native-paper";
 import { useRouter } from "expo-router";
 import colors from "./theme/colors";
+import { GOOGLE_WEB_CLIENT_ID } from "../configs/config";
 
 export default function HomeScreen() {
   const router = useRouter();
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      scopes: ["email", "profile"],
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+    });
+  }, []);
 
   return (
     <View style={styles.container}>
