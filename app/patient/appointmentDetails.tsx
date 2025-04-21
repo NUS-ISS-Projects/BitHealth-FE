@@ -1,21 +1,23 @@
-import React from "react";
-import axios from "axios";
-import { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import {
-  Text,
-  Card,
-  Avatar,
-  IconButton,
-  Divider,
-  Button,
-} from "react-native-paper";
-import { useRouter } from "expo-router";
-import { FontAwesome } from "@expo/vector-icons";
-import colors from "../theme/colors";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
-import { Alert } from "react-native";
 import { API_URL } from "@/configs/config";
+import { getAvatarSource } from "@/helper/avatarGenerator";
+import { FontAwesome } from "@expo/vector-icons";
+import { NavigationProp, useNavigation, useRoute } from "@react-navigation/native";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Avatar,
+  Button,
+  Card,
+  Dialog,
+  Divider,
+  IconButton,
+  Paragraph,
+  Portal,
+  Text,
+} from "react-native-paper";
+import colors from "../theme/colors";
 
 interface DetailRowProps {
   icon: keyof typeof FontAwesome.glyphMap;
@@ -36,65 +38,95 @@ const formatDate = (date: string) => {
   return `${day}-${month}-${year}`;
 };
 
+const getData = async (key: string) => {
+  if (Platform.OS === "web") {
+    // Use localStorage for web
+    return localStorage.getItem(key);
+  } else {
+    // Use expo-secure-store for mobile
+    return await SecureStore.getItemAsync(key);
+  }
+};
+
 export default function AppointmentDetails() {
-  const router = useRouter();
+  const route = useRoute();
   const navigation = useNavigation<NavigationProp<any>>();
+  const { appointmentId } = route.params as { appointmentId: string };
+  const [appointment, setAppointment] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+
+  useEffect(() => {
+    const fetchAppointmentDetails = async () => {
+      try {
+        const token = await getData("authToken");
+        if (!token) {
+          console.error("No authentication token found.");
+          setError(true);
+          setLoading(false);
+          return;
+        }
+        const response = await axios.get(
+          `${API_URL}/api/appointments/${appointmentId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setAppointment(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching appointment details:", error);
+        setError(true);
+        setLoading(false);
+      }
+    };
+    fetchAppointmentDetails();
+  }, [appointmentId]);
 
   const handleReschedule = () => {
     navigation.navigate("AppointmentDate", {
       isRescheduling: true,
-      doctorName: appointment.doctorName,
-      specialty: appointment.specialty,
-      appointmentId: appointment.bookingId,
-      currentDate: appointment.date,
-      currentTime: appointment.time,
+      doctorName: appointment?.doctor.user.name,
+      specialty: appointment?.doctor.specialty,
+      appointmentId: appointment?.appointmentId,
+      currentDate: appointment?.appointmentDate,
+      currentTime: appointment?.appointmentTime,
     });
   };
 
-  const handleDelete = async () => {
-    Alert.alert(
-      "Cancel Appointment",
-      "Are you sure you want to cancel this appointment?",
-      [
-        {
-          text: "No",
-          style: "cancel",
-        },
-        {
-          text: "Yes",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const response = await axios.put(
-                `${API_URL}/api/appointments/updateStatus/4`,
-                { status: "CANCELLED" }
-              );
-
-              if (response.status === 200) {
-                navigation.goBack();
-              }
-            } catch (error) {
-              console.error("Failed to cancel appointment:", error);
-              Alert.alert(
-                "Error",
-                "Failed to cancel appointment. Please try again."
-              );
-            }
-          },
-        },
-      ]
-    );
+  const handleDelete = () => {
+    setDialogVisible(true);
   };
 
-  const appointment = {
-    doctorName: "Dr. Budi Sound",
-    specialty: "General Practitioner",
-    date: "2025-05-21",
-    time: "23:13",
-    status: "Pending",
-    bookingId: "6",
-    image: require("../../assets/images/favicon.png"),
-    reason: "I am down with a fever",
+  const confirmCancel = async () => {
+    try {
+      const token = await getData("authToken");
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
+      const response = await axios.put(
+        `${API_URL}/api/appointments/updateStatus/${appointmentId}`,
+        { status: "CANCELLED" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error("Failed to cancel appointment:", error);
+      Alert.alert(
+        "Error",
+        "Failed to cancel appointment. Please try again."
+      );
+    }
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
@@ -110,7 +142,6 @@ export default function AppointmentDetails() {
           return "#757575";
       }
     };
-
     return (
       <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
         <Text style={styles.statusText}>{status}</Text>
@@ -118,83 +149,112 @@ export default function AppointmentDetails() {
     );
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.headerBarContainer}>
-        <IconButton
-          mode='contained'
-          icon='arrow-left'
-          iconColor={colors.primary}
-          containerColor='white'
-          size={18}
-          onPress={() => router.back()}
-        />
-        <Text style={styles.headerBar}>Appointment Details</Text>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
+    );
+  }
 
-      <Card style={styles.card}>
-        <Card.Content>
-          <View style={styles.doctorSection}>
-            <Avatar.Image size={60} source={appointment.image} />
-            <View style={styles.doctorInfo}>
-              <Text style={styles.doctorName}>{appointment.doctorName}</Text>
-              <Text style={styles.specialty}>{appointment.specialty}</Text>
-            </View>
-            <StatusBadge status={appointment.status} />
-          </View>
+  if (error || !appointment) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Failed to load appointment details.</Text>
+      </View>
+    );
+  }
 
-          <Divider style={styles.divider} />
-
-          <View style={styles.detailsSection}>
-            <DetailRow
-              icon='ticket'
-              label='Appointment ID'
-              value={appointment.bookingId}
-            />
-            <DetailRow
-              icon='calendar'
-              label='Date'
-              value={formatDate(appointment.date)}
-            />
-            <DetailRow
-              icon='clock-o'
-              label='Time'
-              value={formatTime(appointment.time)}
-            />
-          </View>
-          <Divider style={styles.divider} />
-          <View style={styles.reasonSection}>
-            <View style={styles.reasonContent}>
-              <Text style={styles.reasonLabel}>Reason for Visit</Text>
-              <Text style={styles.reasonText}>{appointment.reason}</Text>
-            </View>
-          </View>
-        </Card.Content>
-      </Card>
-      {(appointment.status === "Pending" ||
-        appointment.status === "Confirmed") && (
-        <View style={styles.actionButtons}>
-          <Button
-            mode='outlined'
-            icon='calendar'
-            onPress={handleReschedule}
-            style={styles.rescheduleButton}
-            labelStyle={styles.rescheduleButtonLabel}
-          >
-            Reschedule Appointment
-          </Button>
-          <Button
+  return (
+    <>
+      <ScrollView style={styles.container}>
+        <View style={styles.headerBarContainer}>
+          <IconButton
             mode='contained'
-            icon='delete'
-            onPress={handleDelete}
-            style={styles.deleteButton}
-            labelStyle={styles.deleteButtonLabel}
-          >
-            Cancel Appointment
-          </Button>
+            icon='arrow-left'
+            iconColor={colors.primary}
+            containerColor='white'
+            size={18}
+            onPress={() => navigation.goBack()}
+          />
+          <Text style={styles.headerBar}>Appointment Details</Text>
         </View>
-      )}
-    </ScrollView>
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.doctorSection}>
+              <Avatar.Image size={60} source={getAvatarSource(appointment)} />
+              <View style={styles.doctorInfo}>
+                <Text style={styles.doctorName}>{appointment.doctor.user.name}</Text>
+                <Text style={styles.specialty}>{appointment.doctor.specialty}</Text>
+              </View>
+              <StatusBadge status={appointment.status} />
+            </View>
+            <Divider style={styles.divider} />
+            <View style={styles.detailsSection}>
+              <DetailRow
+                icon='ticket'
+                label='Appointment ID'
+                value={appointment.appointmentId}
+              />
+              <DetailRow
+                icon='calendar'
+                label='Date'
+                value={formatDate(appointment.appointmentDate)}
+              />
+              <DetailRow
+                icon='clock-o'
+                label='Time'
+                value={formatTime(appointment.appointmentTime)}
+              />
+            </View>
+            <Divider style={styles.divider} />
+            <View style={styles.reasonSection}>
+              <View style={styles.reasonContent}>
+                <Text style={styles.reasonLabel}>Reason for Visit</Text>
+                <Text style={styles.reasonText}>{appointment.reasonForVisit}</Text>
+              </View>
+            </View>
+          </Card.Content>
+        </Card>
+        {(appointment.status === "PENDING" ||
+          appointment.status === "CONFIRMED") && (
+          <View style={styles.actionButtons}>
+            <Button
+              mode='outlined'
+              icon='calendar'
+              onPress={handleReschedule}
+              style={styles.rescheduleButton}
+              labelStyle={styles.rescheduleButtonLabel}
+            >
+              Reschedule Appointment
+            </Button>
+            <Button
+              mode='contained'
+              icon='delete'
+              onPress={handleDelete}
+              style={styles.deleteButton}
+              labelStyle={styles.deleteButtonLabel}
+            >
+              Cancel Appointment
+            </Button>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Dialog for Confirmation */}
+      <Portal>
+        <Dialog visible={dialogVisible} onDismiss={() => setDialogVisible(false)}>
+          <Dialog.Title>Cancel Appointment</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph>Are you sure you want to cancel this appointment?</Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDialogVisible(false)}>No</Button>
+            <Button onPress={confirmCancel}>Yes</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 }
 
@@ -332,5 +392,19 @@ const styles = StyleSheet.create({
   deleteButtonLabel: {
     color: "#FFFFFF",
     fontSize: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    color: colors.textSecondary,
+    fontSize: 16,
   },
 });
