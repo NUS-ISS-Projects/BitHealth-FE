@@ -1,3 +1,4 @@
+import { API_URL } from "@/configs/config";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router"; // Import useRouter for navigation
@@ -21,7 +22,6 @@ import {
 import { DatePickerInput } from "react-native-paper-dates";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import colors from "../theme/colors";
-import { API_URL } from "@/configs/config";
 
 export default function PatientSettings() {
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -31,6 +31,7 @@ export default function PatientSettings() {
   const [phone, setPhone] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null); // Store user ID dynamically
   const router = useRouter(); // Initialize router
 
   // Cross-platform function to clear authentication token
@@ -49,12 +50,19 @@ export default function PatientSettings() {
     }
   };
 
+  const getData = async (key: string) => {
+    if (Platform.OS === "web") {
+      return localStorage.getItem(key);
+    } else {
+      return await SecureStore.getItemAsync(key);
+    }
+  };
+
   // Function to handle logout
   const handleLogout = async () => {
     try {
       // Clear the authentication token
       await clearAuthToken();
-
       // Navigate to the login screen
       router.replace("/");
     } catch (error) {
@@ -67,7 +75,18 @@ export default function PatientSettings() {
     const loadPatientData = async () => {
       setLoading(true);
       try {
-        const patientData = await fetchPatientSettings(1);
+        const token = await getData("authToken");
+        if (!token) {
+          console.error("No authentication token found.");
+          return;
+        }
+        // Fetch patient profile
+        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { id } = profileResponse.data; // Extract user ID from the profile response
+        setUserId(id); // Set the user ID
+        const patientData = await fetchPatientSettings(id); // Pass user ID to fetch settings
         setFullName(patientData.user.name || "");
         setGender(patientData.gender.toLowerCase() || "male");
         setEmail(patientData.user.email || "");
@@ -108,7 +127,6 @@ export default function PatientSettings() {
         allowsEditing: true,
         base64: true,
       });
-
       if (!result.canceled) {
         const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
         setAvatar(base64Image);
@@ -119,6 +137,10 @@ export default function PatientSettings() {
   };
 
   const handleSave = async () => {
+    if (!userId) {
+      Alert.alert("Error", "User ID not available. Please try again.");
+      return;
+    }
     setLoading(true);
     try {
       const updateData = {
@@ -131,9 +153,8 @@ export default function PatientSettings() {
           : null,
         avatar: avatar,
       };
-
       const response = await axios.put(
-        `${API_URL}/api/patients/1`,
+        `${API_URL}/api/patients/${userId}`, // Use userId in the endpoint
         updateData,
         {
           headers: {
@@ -141,7 +162,6 @@ export default function PatientSettings() {
           },
         }
       );
-
       if (response.status === 200) {
         Alert.alert("Success", "Profile updated successfully");
       }
@@ -174,8 +194,8 @@ export default function PatientSettings() {
           </TouchableOpacity>
         </View>
         <TextInput
-          label='Full Name'
-          mode='outlined'
+          label="Full Name"
+          mode="outlined"
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
@@ -212,11 +232,11 @@ export default function PatientSettings() {
           ]}
         />
         <TextInput
-          label='Email'
-          mode='outlined'
+          label="Email"
+          mode="outlined"
           value={email}
           onChangeText={setEmail}
-          keyboardType='email-address'
+          keyboardType="email-address"
           style={styles.input}
           theme={{
             colors: {
@@ -225,11 +245,11 @@ export default function PatientSettings() {
           }}
         />
         <TextInput
-          label='Phone Number'
-          mode='outlined'
+          label="Phone Number"
+          mode="outlined"
           value={phone}
           onChangeText={setPhone}
-          keyboardType='phone-pad'
+          keyboardType="phone-pad"
           style={styles.input}
           theme={{
             colors: {
@@ -238,12 +258,12 @@ export default function PatientSettings() {
           }}
         />
         <DatePickerInput
-          locale='en'
-          label='Date of Birth'
+          locale="en"
+          label="Date of Birth"
           value={dateOfBirth}
           onChange={(d) => setDateOfBirth(d)}
-          inputMode='start'
-          mode='outlined'
+          inputMode="start"
+          mode="outlined"
           style={styles.input}
           theme={{
             colors: {
@@ -251,20 +271,18 @@ export default function PatientSettings() {
             },
           }}
         />
-
         {/* Save Button */}
         <Button
-          mode='contained'
+          mode="contained"
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
         >
           Save Changes
         </Button>
-
         {/* Logout Button */}
         <Button
-          mode='outlined'
+          mode="outlined"
           style={styles.logoutButton}
           labelStyle={styles.logoutButtonText}
           onPress={handleLogout}
