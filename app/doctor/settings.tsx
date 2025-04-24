@@ -72,9 +72,10 @@ export default function DoctorSettings() {
           console.error("No authentication token found.");
           return;
         }
-
+        
         const doctorData = await fetchDoctorSettings(token); // Pass doctor ID to fetch settings
         console.log(doctorData);
+        setDoctorId(doctorData.doctorId || "");
         setFullName(doctorData.user.name || "");
         setEmail(doctorData.user.email || "");
         setSpecialty(doctorData.specialization || "");
@@ -104,11 +105,18 @@ export default function DoctorSettings() {
 
   async function fetchDoctorSettings(token: any) {
     try {
-      const response = await axios.get(`${API_URL}/api/appointments/doctor`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+         // Fetch doctor profile
+         const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const { userId } = profileResponse.data;
+        const response = await axios.get(`${API_URL}/api/doctors/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       return response.data;
     } catch (error) {
       console.error("Error fetching doctor settings:", error);
@@ -134,26 +142,30 @@ export default function DoctorSettings() {
   };
 
   const handleSave = async () => {
+    console.log("save triggered");
     if (!doctorId) {
       Alert.alert("Error", "Doctor ID not available. Please try again.");
       return;
     }
-
-    setLoading(true);
     try {
+      const token = await getData("authToken");
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
       const updateData = {
         name: fullName,
         email: email,
         specialization: specialty,
         avatar: avatar,
       };
-
+      console.log(updateData);
       const response = await axios.put(
         `${API_URL}/api/doctors/${doctorId}`, // Use doctorId in the endpoint
         updateData,
         {
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -164,9 +176,7 @@ export default function DoctorSettings() {
     } catch (error) {
       console.error("Error updating profile:", error);
       Alert.alert("Error", "Failed to update profile");
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
   const getInitials = (name: string) => {
