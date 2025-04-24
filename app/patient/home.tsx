@@ -145,9 +145,9 @@ export default function PatientHome() {
                 Upcoming Appointments
               </Text>
             </View>
-            {upcomingAppointments.map((appointment, index) => (
+            {upcomingAppointments.map((appointment) => (
               <Card
-                key={index}
+                key={appointment.appointmentId}
                 style={styles.appointmentCard}
                 onPress={() =>
                   navigation.navigate("AppointmentDetails", {
@@ -231,7 +231,7 @@ export default function PatientHome() {
             Recent Appointments
           </Text>
         </View>
-        {recentAppointments.map((appointment, index) => (
+        {recentAppointments.map((appointment) => (
           <Card
             key={appointment.id}
             style={styles.appointmentCard}
