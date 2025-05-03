@@ -1,39 +1,39 @@
-import React, { useState, useEffect } from "react";
+import { API_URL } from "@/configs/config";
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Platform,
-} from "react-native";
-import {
-  Text,
-  TextInput,
-  Button,
-  Card,
-  IconButton,
-  Chip,
-} from "react-native-paper";
-import {
-  useNavigation,
   NavigationProp,
+  useNavigation,
   useRoute,
 } from "@react-navigation/native";
-import colors from "../theme/colors";
-import { API_URL } from "@/configs/config";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  Button,
+  Card,
+  Chip,
+  IconButton,
+  Text,
+  TextInput,
+} from "react-native-paper";
+import {
+  DatePickerModal,
+  en,
+  registerTranslation,
+} from "react-native-paper-dates";
 import {
   formatDate,
   formatDateForDisplay,
   formatDateForSaving,
   formatLastVerified,
 } from "../../helper/dateTimeFormatter";
-import {
-  DatePickerModal,
-  en,
-  registerTranslation,
-} from "react-native-paper-dates";
+import colors from "../theme/colors";
 
 type AppointmentParams = {
   appointmentId?: string;
@@ -97,10 +97,11 @@ export default function MedicalCertificateScreen() {
 
   const handleApprove = async () => {
     try {
+      const formattedLastVerified = formatLastVerified(new Date());
       const response = await axios.put(
         `${API_URL}/api/medical-certificates/verify/${certificate.certificateId}`,
         {
-          lastVerified: new Date().toLocaleString(),
+          lastVerified: formattedLastVerified,
         }
       );
       if (response.status === 200) {

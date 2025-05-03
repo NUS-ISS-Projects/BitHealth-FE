@@ -23,6 +23,7 @@ export default function DoctorSettings() {
   const [email, setEmail] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [loading, setLoading] = useState(false);
+  const [doctorId, setDoctorId] = useState<number | null>(null); // Store doctor ID dynamically
   const router = useRouter();
 
   // Cross-platform function to clear authentication token
@@ -46,7 +47,6 @@ export default function DoctorSettings() {
     try {
       // Clear the authentication token
       await clearAuthToken();
-
       // Navigate to the login screen
       router.replace("/");
     } catch (error) {
@@ -55,30 +55,11 @@ export default function DoctorSettings() {
     }
   };
 
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      const updateData = {
-        name: fullName,
-        email: email,
-        specialization: specialty,
-        avatar: avatar,
-      };
-
-      const response = await axios.put(`${API_URL}/api/doctors/1`, updateData, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.status === 200) {
-        Alert.alert("Success", "Profile updated successfully");
-      }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      Alert.alert("Error", "Failed to update profile");
-    } finally {
-      setLoading(false);
+  const getData = async (key: string) => {
+    if (Platform.OS === "web") {
+      return localStorage.getItem(key);
+    } else {
+      return await SecureStore.getItemAsync(key);
     }
   };
 
@@ -86,10 +67,19 @@ export default function DoctorSettings() {
     const loadDoctorData = async () => {
       setLoading(true);
       try {
-        const doctorData = await fetchDoctorSettings(1);
+        const token = await getData("authToken");
+        if (!token) {
+          console.error("No authentication token found.");
+          return;
+        }
+        
+        const doctorData = await fetchDoctorSettings(token); // Pass doctor ID to fetch settings
+        console.log(doctorData);
+        setDoctorId(doctorData.doctorId || "");
         setFullName(doctorData.user.name || "");
         setEmail(doctorData.user.email || "");
         setSpecialty(doctorData.specialization || "");
+
         if (doctorData.avatar) {
           if (
             doctorData.avatar.startsWith("data:image") &&
@@ -105,7 +95,7 @@ export default function DoctorSettings() {
           }
         }
       } catch (error) {
-        console.error("Failed to load patient data:", error);
+        console.error("Failed to load doctor data:", error);
       } finally {
         setLoading(false);
       }
@@ -113,12 +103,23 @@ export default function DoctorSettings() {
     loadDoctorData();
   }, []);
 
-  async function fetchDoctorSettings(doctorId: number) {
+  async function fetchDoctorSettings(token: any) {
     try {
-      const response = await axios.get(`${API_URL}/api/doctors/${doctorId}`);
+         // Fetch doctor profile
+         const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const { userId } = profileResponse.data;
+        const response = await axios.get(`${API_URL}/api/doctors/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
       return response.data;
     } catch (error) {
-      console.error("Error fetching patient settings:", error);
+      console.error("Error fetching doctor settings:", error);
       throw error;
     }
   }
@@ -138,6 +139,44 @@ export default function DoctorSettings() {
     } catch (error) {
       console.error("Error selecting image:", error);
     }
+  };
+
+  const handleSave = async () => {
+    console.log("save triggered");
+    if (!doctorId) {
+      Alert.alert("Error", "Doctor ID not available. Please try again.");
+      return;
+    }
+    try {
+      const token = await getData("authToken");
+      if (!token) {
+        throw new Error("Authentication token not found.");
+      }
+      const updateData = {
+        name: fullName,
+        email: email,
+        specialization: specialty,
+        avatar: avatar,
+      };
+      console.log(updateData);
+      const response = await axios.put(
+        `${API_URL}/api/doctors/${doctorId}`, // Use doctorId in the endpoint
+        updateData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        Alert.alert("Success", "Profile updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      Alert.alert("Error", "Failed to update profile");
+    } 
   };
 
   const getInitials = (name: string) => {
@@ -169,7 +208,7 @@ export default function DoctorSettings() {
           </TouchableOpacity>
         </View>
         <TextInput
-          label='Full Name'
+          label="Full Name"
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
@@ -180,7 +219,7 @@ export default function DoctorSettings() {
           }}
         />
         <TextInput
-          label='Specialty'
+          label="Specialty"
           value={specialty}
           onChangeText={setSpecialty}
           style={styles.input}
@@ -191,10 +230,10 @@ export default function DoctorSettings() {
           }}
         />
         <TextInput
-          label='Email'
+          label="Email"
           value={email}
           onChangeText={setEmail}
-          keyboardType='email-address'
+          keyboardType="email-address"
           style={styles.input}
           theme={{
             colors: {
@@ -205,7 +244,7 @@ export default function DoctorSettings() {
 
         {/* Save Button */}
         <Button
-          mode='contained'
+          mode="contained"
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
@@ -215,7 +254,7 @@ export default function DoctorSettings() {
 
         {/* Logout Button */}
         <Button
-          mode='outlined'
+          mode="outlined"
           style={styles.logoutButton}
           labelStyle={styles.logoutButtonText}
           onPress={handleLogout}

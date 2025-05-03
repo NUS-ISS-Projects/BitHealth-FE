@@ -145,9 +145,9 @@ export default function PatientHome() {
                 Upcoming Appointments
               </Text>
             </View>
-            {upcomingAppointments.map((appointment, index) => (
+            {upcomingAppointments.map((appointment) => (
               <Card
-                key={index}
+                key={appointment.appointmentId}
                 style={styles.appointmentCard}
                 onPress={() =>
                   navigation.navigate("AppointmentDetails", {
@@ -231,15 +231,23 @@ export default function PatientHome() {
             Recent Appointments
           </Text>
         </View>
-        {recentAppointments.map((appointment, index) => (
+        {recentAppointments.map((appointment) => (
           <Card
-            key={index}
+            key={appointment.id}
             style={styles.appointmentCard}
-            onPress={() =>
-              navigation.navigate("AppointmentDetails", {
-                appointmentId: appointment.appointmentId,
-              })
-            }
+            onPress={() => {
+              // Navigate to History first
+              navigation.navigate("History", {
+                screen: "ConsultationDetails", // Navigate to ConsultationDetails within History
+                params: {
+                  appointmentId: appointment.id,
+                  doctorName: appointment.doctor?.user?.name || "Unknown Doctor",
+                  specialty: appointment.doctor?.specialization || "",
+                  appointmentDate: formatDate(appointment.appointmentDate),
+                  appointmentTime: formatTime(appointment.appointmentTime),
+                },
+              });
+            }}
           >
             <Card.Content style={styles.appointmentCardContent}>
               <Avatar.Image size={50} source={getAvatarSource(appointment)} />

@@ -42,38 +42,19 @@ export function formatDateForSaving(dateStr: string): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatLastVerified(dateString: string): string {
-  const date = new Date(dateString);
-  const day = date.getDate();
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
+export const formatLastVerified = (date: Date | string): string => {
+  const parsedDate = typeof date === "string" ? new Date(date) : date; // Convert string to Date if needed
 
-  const timeOptions: Intl.DateTimeFormatOptions = {
-    hour: "numeric",
-    minute: "numeric",
-    second: "numeric",
-    hour12: true,
-  };
-  let timeStr = date.toLocaleTimeString("en-US", timeOptions); // e.g. "9:38:26 PM"
-  timeStr = timeStr.replace(/(AM|PM)/, (match) => match.toLowerCase());
-  // Ensure there's a space before the lowercase am/pm if missing
-  if (!timeStr.match(/\s(am|pm)$/)) {
-    timeStr = timeStr.replace(/(am|pm)$/, " $1");
-  }
+  const month = parsedDate.getMonth() + 1; // Months are zero-based (0 = January)
+  const day = parsedDate.getDate();
+  const year = parsedDate.getFullYear();
+  const hours = parsedDate.getHours();
+  const minutes = parsedDate.getMinutes();
+  const seconds = parsedDate.getSeconds();
+  const ampm = hours >= 12 ? "pm" : "am";
+  const formattedHours = hours % 12 || 12; // Convert to 12-hour format
 
-  return `${day} ${month} ${year}, ${timeStr}`;
-}
+  return `${month}/${day}/${year}, ${formattedHours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} ${ampm}`;
+};
+
+
