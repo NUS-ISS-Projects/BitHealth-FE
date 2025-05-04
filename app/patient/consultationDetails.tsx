@@ -47,7 +47,6 @@ export default function ConsultationDetails() {
     appointmentDate,
     appointmentTime,
   } = route.params as AppointmentParams;
-
   const handleTabPress = (tab: TabKey) => {
     setSelectedTab(tab);
   };

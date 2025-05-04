@@ -34,9 +34,12 @@ export default function PatientHome() {
         }
 
         // Fetch patient profile
-        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const profileResponse = await axios.get(
+          `${API_URL}/api/users/profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         const { name } = profileResponse.data;
         setUserName(name);
 
@@ -95,12 +98,12 @@ export default function PatientHome() {
   const StatusBadge = ({ status }: { status: string }) => {
     const getStatusColor = () => {
       switch (status) {
-        case "Completed":
+        case "COMPLETED":
           return "#4CAF50";
-        case "Upcoming":
+        case "CONFIRMED":
           return colors.primary;
-        case "Cancelled":
-          return "#757575";
+        case "CANCELLED":
+          return "#F44336";
         default:
           return "#757575";
       }
@@ -122,17 +125,17 @@ export default function PatientHome() {
             source={require("../../assets/images/bithealth-logo.png")}
             style={styles.logo}
           />
-          <Text variant="titleMedium" style={styles.title}>
+          <Text variant='titleMedium' style={styles.title}>
             BitHealth
           </Text>
         </View>
 
         {/* Greeting Section */}
         <View style={styles.greetingContainer}>
-          <Text variant="titleSmall" style={styles.greetingText}>
+          <Text variant='titleSmall' style={styles.greetingText}>
             Hello,
           </Text>
-          <Text variant="titleLarge" style={styles.userName}>
+          <Text variant='titleLarge' style={styles.userName}>
             {userName} 👋
           </Text>
         </View>
@@ -141,7 +144,7 @@ export default function PatientHome() {
         {hasUpcoming ? (
           <>
             <View style={styles.sectionHeader}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text variant='titleMedium' style={styles.sectionTitle}>
                 Upcoming Appointments
               </Text>
             </View>
@@ -158,23 +161,22 @@ export default function PatientHome() {
                 <Card.Content style={styles.appointmentCardContent}>
                   <Avatar.Image
                     size={50}
-                    source={getAvatarSource(appointment)}
+                    source={getAvatarSource({
+                      id: Number(appointment.doctor?.user?.userId),
+                    })}
                   />
                   <View style={styles.appointmentDetails}>
                     <View style={styles.appointmentHeader}>
-                      <Text variant="titleSmall" style={styles.doctorName}>
+                      <Text variant='titleSmall' style={styles.doctorName}>
                         {appointment.doctor.user.name}
                       </Text>
                     </View>
-                    <Text
-                      variant="bodySmall"
-                      style={styles.appointmentReason}
-                    >
+                    <Text variant='bodySmall' style={styles.appointmentReason}>
                       {appointment.reasonForVisit}
                     </Text>
                     <View style={styles.timeContainer}>
                       <Text
-                        variant="labelMedium"
+                        variant='labelMedium'
                         style={styles.appointmentDate}
                       >
                         {formatDate(appointment.appointmentDate)},{" "}
@@ -190,7 +192,7 @@ export default function PatientHome() {
               </Card>
             ))}
             <Button
-              mode="contained"
+              mode='contained'
               style={styles.bookButton}
               labelStyle={{ color: "white" }}
               onPress={() => navigation.navigate("Reason")}
@@ -205,15 +207,15 @@ export default function PatientHome() {
                 source={require("../../assets/images/patient-home.png")}
                 style={styles.bookingImage}
               />
-              <Text variant="titleMedium" style={styles.bookingTitle}>
+              <Text variant='titleMedium' style={styles.bookingTitle}>
                 No booking schedule
               </Text>
-              <Text variant="bodyMedium" style={styles.bookingDescription}>
+              <Text variant='bodyMedium' style={styles.bookingDescription}>
                 Seems like you do not have any appointment scheduled today.
               </Text>
               <View>
                 <Button
-                  mode="contained"
+                  mode='contained'
                   style={styles.bookButton}
                   labelStyle={{ color: "white" }}
                   onPress={() => navigation.navigate("Reason")}
@@ -227,7 +229,7 @@ export default function PatientHome() {
 
         {/* Recent Appointments */}
         <View style={styles.sectionHeader}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant='titleMedium' style={styles.sectionTitle}>
             Recent Appointments
           </Text>
         </View>
@@ -238,10 +240,11 @@ export default function PatientHome() {
             onPress={() => {
               // Navigate to History first
               navigation.navigate("History", {
-                screen: "ConsultationDetails", // Navigate to ConsultationDetails within History
+                screen: "ConsultationDetails",
                 params: {
-                  appointmentId: appointment.id,
-                  doctorName: appointment.doctor?.user?.name || "Unknown Doctor",
+                  appointmentId: appointment.appointmentId,
+                  doctorName:
+                    appointment.doctor?.user?.name || "Unknown Doctor",
                   specialty: appointment.doctor?.specialization || "",
                   appointmentDate: formatDate(appointment.appointmentDate),
                   appointmentTime: formatTime(appointment.appointmentTime),
@@ -250,18 +253,23 @@ export default function PatientHome() {
             }}
           >
             <Card.Content style={styles.appointmentCardContent}>
-              <Avatar.Image size={50} source={getAvatarSource(appointment)} />
+              <Avatar.Image
+                size={50}
+                source={getAvatarSource({
+                  id: Number(appointment.doctor?.user?.userId),
+                })}
+              />
               <View style={styles.appointmentDetails}>
                 <View style={styles.appointmentHeader}>
-                  <Text variant="titleSmall" style={styles.doctorName}>
+                  <Text variant='titleSmall' style={styles.doctorName}>
                     {appointment.doctor.user.name}
                   </Text>
                 </View>
-                <Text variant="bodySmall" style={styles.appointmentReason}>
+                <Text variant='bodySmall' style={styles.appointmentReason}>
                   {appointment.reasonForVisit}
                 </Text>
                 <View style={styles.timeContainer}>
-                  <Text variant="labelMedium" style={styles.appointmentDate}>
+                  <Text variant='labelMedium' style={styles.appointmentDate}>
                     {formatDate(appointment.appointmentDate)},{" "}
                     {formatTime(appointment.appointmentTime)}
                   </Text>

@@ -51,10 +51,11 @@ export const formatLastVerified = (date: Date | string): string => {
   const hours = parsedDate.getHours();
   const minutes = parsedDate.getMinutes();
   const seconds = parsedDate.getSeconds();
-  const ampm = hours >= 12 ? "pm" : "am";
+  const ampm = hours >= 12 ? "PM" : "AM";
   const formattedHours = hours % 12 || 12; // Convert to 12-hour format
 
-  return `${month}/${day}/${year}, ${formattedHours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} ${ampm}`;
+  return `${month}/${day}/${year}, ${formattedHours}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")} ${ampm}`;
 };
-
-

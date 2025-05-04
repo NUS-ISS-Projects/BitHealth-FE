@@ -12,12 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  Avatar,
-  Button,
-  Text,
-  TextInput,
-} from "react-native-paper";
+import { Avatar, Button, Text, TextInput } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function PatientSettings() {
@@ -70,9 +65,12 @@ export default function PatientSettings() {
         }
 
         // Fetch patient profile
-        const profileResponse = await axios.get(`${API_URL}/api/users/profile`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const profileResponse = await axios.get(
+          `${API_URL}/api/users/profile`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         const { userId, name } = profileResponse.data;
         setUserId(userId);
 
@@ -81,7 +79,6 @@ export default function PatientSettings() {
         setFullName(patientData.user.name || "");
         setEmail(patientData.user.email || "");
         setPhone(patientData.contactNumber || "");
-        
 
         if (patientData.avatar) {
           setAvatar(
@@ -101,7 +98,9 @@ export default function PatientSettings() {
 
   const fetchPatientSettings = async (patientId: number) => {
     try {
-      const response = await axios.get(`${API_URL}/api/patients/profile/${patientId}`);
+      const response = await axios.get(
+        `${API_URL}/api/patients/profile/${patientId}`
+      );
       return response.data;
     } catch (error) {
       console.error("Error fetching patient settings:", error);
@@ -140,7 +139,6 @@ export default function PatientSettings() {
       const patientData = await fetchPatientSettings(userId);
       const { patientId } = patientData;
 
-
       setLoading(true);
 
       const updateData = {
@@ -149,7 +147,7 @@ export default function PatientSettings() {
         contact_number: phone,
         avatar: avatar,
         date_of_birth: "1990-01-01",
-        gender: "Unkown"
+        gender: "Unkown",
       };
 
       const response = await axios.put(
@@ -187,39 +185,42 @@ export default function PatientSettings() {
                 : require("../../assets/images/favicon.png")
             }
           />
-          <TouchableOpacity style={styles.editAvatar} onPress={handleAvatarSelect}>
+          <TouchableOpacity
+            style={styles.editAvatar}
+            onPress={handleAvatarSelect}
+          >
             <Text style={styles.editAvatarText}>Edit</Text>
           </TouchableOpacity>
         </View>
         <TextInput
-          label="Full Name"
-          mode="outlined"
+          label='Full Name'
+          mode='outlined'
           value={fullName}
           onChangeText={setFullName}
           style={styles.input}
           theme={{ colors: { primary: "#007BFF" } }}
         />
         <TextInput
-          label="Email"
-          mode="outlined"
+          label='Email'
+          mode='outlined'
           value={email}
           onChangeText={setEmail}
-          keyboardType="email-address"
+          keyboardType='email-address'
           style={styles.input}
-          theme={{ colors: { primary: "#007BFF" } }}
+          theme={{ colors: { primary: "#123D1F" } }}
         />
         <TextInput
-          label="Phone Number"
-          mode="outlined"
+          label='Phone Number'
+          mode='outlined'
           value={phone}
           onChangeText={setPhone}
-          keyboardType="phone-pad"
+          keyboardType='phone-pad'
           style={styles.input}
-          theme={{ colors: { primary: "#007BFF" } }}
+          theme={{ colors: { primary: "#123D1F" } }}
         />
         {/* Save Button */}
         <Button
-          mode="contained"
+          mode='contained'
           style={styles.saveButton}
           labelStyle={styles.saveButtonText}
           onPress={handleSave}
@@ -228,7 +229,7 @@ export default function PatientSettings() {
         </Button>
         {/* Logout Button */}
         <Button
-          mode="outlined"
+          mode='outlined'
           style={styles.logoutButton}
           labelStyle={styles.logoutButtonText}
           onPress={handleLogout}
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#007BFF",
+    color: "#123D1F",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   },
   editAvatar: {
     marginTop: -20,
-    backgroundColor: "#007BFF",
+    backgroundColor: "#123D1F",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 20,
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   saveButton: {
-    backgroundColor: "#007BFF",
+    backgroundColor: "#123D1F",
     borderRadius: 50,
     paddingVertical: 10,
     marginTop: 20,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
   },
   logoutButton: {
-    borderColor: "#007BFF",
+    borderColor: "#123D1F",
     borderWidth: 1,
     borderRadius: 50,
     paddingVertical: 10,
@@ -292,6 +293,6 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#007BFF",
+    color: "#123D1F",
   },
 });
